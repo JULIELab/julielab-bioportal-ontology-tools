@@ -1,0 +1,60 @@
+<configuration scan="true">
+
+	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+		<!-- encoders are assigned the type ch.qos.logback.classic.encoder.PatternLayoutEncoder 
+			by default -->
+		<encoder>
+			<pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{80} - %msg%n
+			</pattern>
+		</encoder>
+	</appender>
+
+	<appender name="FILE" class="ch.qos.logback.core.FileAppender">
+		<file>bioportal-tools.log</file>
+		<append>false</append>
+		<!-- encoders are assigned the type ch.qos.logback.classic.encoder.PatternLayoutEncoder 
+			by default -->
+		<encoder>
+			<pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n
+			</pattern>
+		</encoder>
+	</appender>
+
+
+	<appender name="FILE_UNPARSABLE" class="ch.qos.logback.core.FileAppender">
+		<file>unparsable.log</file>
+		<append>true</append>
+		<!-- encoders are assigned the type ch.qos.logback.classic.encoder.PatternLayoutEncoder 
+			by default -->
+		<encoder>
+			<pattern>%msg%n
+			</pattern>
+		</encoder>
+	</appender>
+
+	<logger name="org.xml.sax.XMLReader" level="WARN" />
+	<logger name="org.apache.http" level="INFO" />
+	<logger name="org.openrdf" level="INFO" />
+	<logger name="org.semanticweb.owlapi" level="WARN" />
+	<logger name="uk.ac.manchester.cs.owl.owlapi.OWLDataFactoryInternalsImpl"
+		level="WARN" />
+	<logger name="org.obolibrary.oboformat.parser.OBOFormatParser"
+		level="ERROR" />
+	<logger name="org.obolibrary.obo2owl.OWLAPIObo2Owl" level="ERROR" />
+	<logger name="org.semanticweb.owlapi.util.OWLAnnotationPropertyTransformer"
+		level="ERROR" />
+
+	<logger name="de.julielab.bioportal.ontologies.HttpHandler"
+		level="INFO" />
+	<logger
+		name="de.julielab.bioportal.ontologies.OntologyClassNameExtractor.unparsable"
+		level="TRACE">
+		<appender-ref ref="FILE_UNPARSABLE" />
+	</logger>
+
+
+	<root level="DEBUG">
+		<appender-ref ref="STDOUT" />
+		<appender-ref ref="FILE" />
+	</root>
+</configuration>
