@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class OntologyClassParents {
+	public static final OntologyClassParents EMPTY_PARENTS = new OntologyClassParents();
+	
 	public List<String> parents;
 
 	public void addParent(String synonym) {

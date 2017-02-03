@@ -32,6 +32,9 @@ import org.semanticweb.owlapi.model.OWLLiteral;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.parameters.Imports;
+import org.semanticweb.owlapi.reasoner.NodeSet;
+import org.semanticweb.owlapi.reasoner.OWLReasoner;
+import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 import org.semanticweb.owlapi.search.EntitySearcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,6 +45,7 @@ import de.julielab.bioportal.ontologies.data.OntologyClass;
 import de.julielab.bioportal.ontologies.data.OntologyClassParents;
 import de.julielab.bioportal.ontologies.data.OntologyClassSynonyms;
 import de.julielab.bioportal.util.BioPortalToolUtils;
+import uk.ac.manchester.cs.jfact.JFactFactory;
 
 /**
  * The error "[Fatal Error] :1:1: Content is not allowed in prolog." for OBO
@@ -60,10 +64,12 @@ public class OntologyClassNameExtractor {
 	private Gson gson;
 
 	private ExecutorService executor;
+	private OWLReasonerFactory reasonerFactory;
 
 	public OntologyClassNameExtractor() {
 		this.gson = BioPortalToolUtils.getGson();
 		this.executor = Executors.newFixedThreadPool(8);
+		reasonerFactory = new JFactFactory();
 	}
 
 	public int run(File input, File submissionsDirectory, File output)
@@ -101,7 +107,7 @@ public class OntologyClassNameExtractor {
 		List<Future<Void>> futures = new ArrayList<>(files.length);
 		for (int i = 0; i < files.length; i++) {
 			File file = files[i];
-			if (ontologiesToExtract != null
+			if (ontologiesToExtract != null && !ontologiesToExtract.isEmpty()
 					&& !ontologiesToExtract.contains(BioPortalToolUtils.getAcronymFromFileName(file)))
 				continue;
 			Future<Void> future = executor.submit(new NameExtractorWorker(file, submissionsDirectory, outputDir));
@@ -169,12 +175,14 @@ public class OntologyClassNameExtractor {
 
 				@Override
 				public boolean accept(File dir, String name) {
-					return BioPortalToolUtils.getAcronymFromFileName(name.toLowerCase()).equals(BioPortalToolUtils.getAcronymFromFileName(acronym.toLowerCase()));
+					return BioPortalToolUtils.getAcronymFromFileName(name.toLowerCase())
+							.equals(BioPortalToolUtils.getAcronymFromFileName(acronym.toLowerCase()));
 				}
 			});
 			if (mainFileCandidates == null || mainFileCandidates.length == 0) {
 				log.error(
-						"For ontology {} a directory of files is given. Could not identify the main file. Skipping this ontology.", acronym);
+						"For ontology {} a directory of files is given. Could not identify the main file. Skipping this ontology.",
+						acronym);
 				return;
 			} else if (mainFileCandidates.length > 1) {
 				log.error(
@@ -198,6 +206,8 @@ public class OntologyClassNameExtractor {
 			throw e;
 		}
 
+		OWLReasoner reasoner = reasonerFactory.createReasoner(o);
+		
 		List<OntologyClass> classNames = new ArrayList<>();
 		Stream<OWLClass> classesInSignature = o.classesInSignature(Imports.INCLUDED);
 		for (Iterator<OWLClass> iterator = classesInSignature.iterator(); iterator.hasNext();) {
@@ -206,10 +216,16 @@ public class OntologyClassNameExtractor {
 			if (determineObsolete(ontologyFile, o, c, properties))
 				continue;
 
+			if (c.getIRI().toString().endsWith("C16843")) {
+				Stream<OWLClassExpression> subClasses = EntitySearcher.getSubClasses(c, o);
+				subClasses.map(OWLClassExpression::asOWLClass).map(OWLClass::getIRI)
+						.forEach(id -> System.out.println(id));
+			}
+
 			String preferredName = determinePreferredName(o, c, properties);
 			OntologyClassSynonyms synonyms = determineSynonyms(o, c, properties);
 			String definition = determineDefinition(o, c, properties);
-			OntologyClassParents ontologyClassParents = determineClassParents(o, c);
+			OntologyClassParents ontologyClassParents = determineClassParents(o, c, reasoner);
 
 			OntologyClass ontologyClass = new OntologyClass();
 			ontologyClass.id = c.getIRI().toString();
@@ -238,12 +254,15 @@ public class OntologyClassNameExtractor {
 	 * 
 	 * @param o
 	 * @param c
+	 * @param reasoner
 	 * @return
 	 */
-	private OntologyClassParents determineClassParents(OWLOntology o, OWLClass c) {
-		Stream<OWLClassExpression> superClasses = EntitySearcher.getSuperClasses(c, o);
+	private OntologyClassParents determineClassParents(OWLOntology o, OWLClass c, OWLReasoner reasoner) {
+		// Stream<OWLClassExpression> superClasses =
+		// EntitySearcher.getSuperClasses(c, o);
+		Stream<OWLClass> superClasses = reasoner.getSuperClasses(c).entities();
 		OntologyClassParents classParents = new OntologyClassParents();
-		for (Iterator<OWLClassExpression> iterator = superClasses.iterator(); iterator.hasNext();) {
+		for (Iterator<OWLClass> iterator = superClasses.iterator(); iterator.hasNext();) {
 			OWLClassExpression classExpr = iterator.next();
 			if (!classExpr.isAnonymous()) {
 				OWLClass owlClass = classExpr.asOWLClass();

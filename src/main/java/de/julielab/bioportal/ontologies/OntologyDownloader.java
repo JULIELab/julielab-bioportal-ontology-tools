@@ -117,19 +117,6 @@ public class OntologyDownloader {
 				log.warn("Ontology {} has type {}", metaData.acronym, metaData.type);
 			}
 
-			// File submissionFile = new File(ontologyInfoDir.getAbsolutePath()
-			// + File.separator + metaData.acronym
-			// + BioPortalToolConstants.SUBMISSION_EXT);
-			// File submissionsFile = new File(ontologyInfoDir.getAbsolutePath()
-			// + File.separator + metaData.acronym
-			// + BioPortalToolConstants.SUBMISSIONS_EXT);
-			// File projectsFile = new File(ontologyInfoDir.getAbsolutePath() +
-			// File.separator + metaData.acronym
-			// + BioPortalToolConstants.PROJECTS_EXT);
-			// File analyticsFile = new File(ontologyInfoDir.getAbsolutePath() +
-			// File.separator + metaData.acronym
-			// + BioPortalToolConstants.ANALYTICS_EXT);
-
 			DownloadWorker worker = new DownloadWorker(metaData, ontologyDataDir, ontologyInfoDir, downloadStats);
 			try {
 				worker.download();
@@ -143,53 +130,6 @@ public class OntologyDownloader {
 				ontologiesWithDownloadIssues.add(
 						new ImmutablePair<Future<OntologyMetaData>, OntologyDownloader.DownloadWorker>(future, worker));
 			}
-			// try {
-			// String submission = downloadInfoForOntology(
-			// String.format(latestSubmissionEndpointFmtString,
-			// metaData.acronym), submissionFile, metaData,
-			// "latest submission");
-			// downloadInfoForOntology(metaData.links.submissions.toString(),
-			// submissionsFile, metaData,
-			// "submissions");
-			// downloadInfoForOntology(metaData.links.projects.toString(),
-			// projectsFile, metaData, "projects");
-			//
-			// downloadInfoForOntology(metaData.links.analytics.toString(),
-			// analyticsFile, metaData, "analytics");
-			//
-			// downloadOntologyFile(ontologyDataDir, metaData,
-			// gson.fromJson(submission, Submission.class));
-			// } catch (OntologyFileNotAvailableException e) {
-			// log.warn(
-			// "Ontology {} could not be downloaded because no file is available
-			// for download. Deleting info files for this ontology.",
-			// metaData.acronym);
-			// downloadStats.addOntologyWithoutFile(metaData.acronym);
-			// if (submissionFile.exists())
-			// submissionFile.delete();
-			// if (submissionsFile.exists())
-			// submissionsFile.delete();
-			// if (projectsFile.exists())
-			// projectsFile.delete();
-			// if (analyticsFile.exists())
-			// analyticsFile.delete();
-			//
-			// } catch (ResourceAccessDeniedException e) {
-			// log.warn("Ontology {} could not be downloaded because the server
-			// rejected access: {}", metaData.acronym,
-			// e.getMessage());
-			// downloadStats.addDeniedOntology(metaData.acronym);
-			// if (submissionFile.exists())
-			// submissionFile.delete();
-			// if (submissionsFile.exists())
-			// submissionsFile.delete();
-			// if (projectsFile.exists())
-			// projectsFile.delete();
-			// if (analyticsFile.exists())
-			// analyticsFile.delete();
-			//
-			// }
-			// downloadStats.addDownloadedOntology(metaData.acronym);
 		}
 		log.info(
 				"Finished downloading ontologies in main thread. {} ontologies had issues during download. Waiting for them to finish.",
@@ -247,12 +187,15 @@ public class OntologyDownloader {
 		private OntologyMetaData metaData;
 		private File ontologyDataDir;
 		private DownloadStats downloadStats;
+		private File metaDataFile;
 
 		public DownloadWorker(OntologyMetaData metaData, File ontologyDataDir, File ontologyInfoDir,
 				DownloadStats downloadStats) {
 			this.metaData = metaData;
 			this.ontologyDataDir = ontologyDataDir;
 			this.downloadStats = downloadStats;
+			this.metaDataFile = new File(ontologyInfoDir.getAbsolutePath() + File.separator + metaData.acronym
+					+ BioPortalToolConstants.METADATA_EXT);
 			this.submissionFile = new File(ontologyInfoDir.getAbsolutePath() + File.separator + metaData.acronym
 					+ BioPortalToolConstants.SUBMISSION_EXT);
 			this.submissionsFile = new File(ontologyInfoDir.getAbsolutePath() + File.separator + metaData.acronym
@@ -269,6 +212,10 @@ public class OntologyDownloader {
 
 		public void download() throws JsonSyntaxException, IOException, ResourceDownloadException, ParseException {
 			try {
+				if (!metaDataFile.exists())
+					FileUtils.write(metaDataFile, gson.toJson(metaData), "UTF-8");
+				else
+					log.info("Meta data file {} already exist and is not overwritten", metaDataFile);
 				String submission = downloadInfoForOntology(
 						String.format(latestSubmissionEndpointFmtString, metaData.acronym), submissionFile, metaData,
 						"latest submission");
@@ -307,6 +254,8 @@ public class OntologyDownloader {
 		 */
 		private void removeOntologyFiles() {
 			log.info("Deleting info files for ontology {}", metaData.acronym);
+			if (metaDataFile.exists())
+				metaDataFile.delete();
 			if (submissionFile.exists())
 				submissionFile.delete();
 			if (submissionsFile.exists())
@@ -374,7 +323,7 @@ public class OntologyDownloader {
 					ontologyFile.getAbsolutePath());
 			return;
 		}
-		// Some ontologies actually consist of multiple files, those are stored
+		// "ontologyDir" because some ontologies actually consist of multiple files, those are stored
 		// in a directory of their own
 		File ontologyDir = new File(ontologyDataDir.getAbsolutePath() + File.separator + ontoInf.acronym);
 		if (ontologyDir.exists()) {
@@ -423,7 +372,8 @@ public class OntologyDownloader {
 					ZipEntry entry = zipStream.getNextEntry();
 					while (entry != null) {
 						String filename = entry.getName();
-						writeStreamToFile(zipStream, new File(ontologyDataDir.getAbsolutePath() + File.separator + ontoInf.acronym + File.separator + filename + ".gz"));
+						writeStreamToFile(zipStream, new File(ontologyDataDir.getAbsolutePath() + File.separator
+								+ ontoInf.acronym + File.separator + filename + ".gz"));
 						entry = zipStream.getNextEntry();
 					}
 				} else {
@@ -441,7 +391,7 @@ public class OntologyDownloader {
 
 		conn.disconnect();
 	}
-	
+
 	private void writeStreamToFile(InputStream is, File outputFile) throws FileNotFoundException, IOException {
 		// write to file
 		try (OutputStream os = new GZIPOutputStream(new FileOutputStream(outputFile))) {
