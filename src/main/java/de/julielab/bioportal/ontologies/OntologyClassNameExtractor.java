@@ -7,6 +7,7 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -17,8 +18,10 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -32,7 +35,6 @@ import org.semanticweb.owlapi.model.OWLLiteral;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.parameters.Imports;
-import org.semanticweb.owlapi.reasoner.NodeSet;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 import org.semanticweb.owlapi.search.EntitySearcher;
@@ -68,6 +70,7 @@ public class OntologyClassNameExtractor {
 
 	public OntologyClassNameExtractor() {
 		this.gson = BioPortalToolUtils.getGson();
+		// TODO allow to pass the service
 		this.executor = Executors.newFixedThreadPool(8);
 		reasonerFactory = new JFactFactory();
 	}
@@ -110,7 +113,8 @@ public class OntologyClassNameExtractor {
 			if (ontologiesToExtract != null && !ontologiesToExtract.isEmpty()
 					&& !ontologiesToExtract.contains(BioPortalToolUtils.getAcronymFromFileName(file)))
 				continue;
-			Future<Void> future = executor.submit(new NameExtractorWorker(file, submissionsDirectory, outputDir));
+			Future<Void> future = executor
+					.submit(new NameExtractorWorker(file, submissionsDirectory, input, outputDir));
 			futures.add(future);
 			++numOntologies;
 		}
@@ -127,10 +131,12 @@ public class OntologyClassNameExtractor {
 		private File submissionsDirectory;
 		private File outputDir;
 		private OntologyLoader ontologyLoader;
+		private File ontosDir;
 
-		public NameExtractorWorker(File file, File submissionsDirectory, File outputDir) {
+		public NameExtractorWorker(File file, File submissionsDirectory, File ontosDir, File outputDir) {
 			this.file = file;
 			this.submissionsDirectory = submissionsDirectory;
+			this.ontosDir = ontosDir;
 			this.outputDir = outputDir;
 			this.ontologyLoader = new OntologyLoader();
 		}
@@ -142,7 +148,40 @@ public class OntologyClassNameExtractor {
 				try {
 					extractNamesForOntology(file, submissionsDirectory, outputDir, ontologyLoader);
 				} catch (UnparsableOntologyException e) {
-					logUnparsableOntologies.error("{}", file);
+					log.error("Could not parse ontology file {}", file);
+					if (lcfn.contains(".umls")) {
+						log.warn("The unparsable ontology is in UMLS format. Those have sometimes issues by chemical"
+								+ " names containing the character sequence ''' which is mistakenly interpreted as a string"
+								+ " end quote for \"\"\" by the turtle parser in OWL API 5.x. It will be tried to remove such"
+								+ " lines and then try parsing again.");
+						File backupDir = new File(ontosDir.getAbsoluteFile().getParentFile().getAbsolutePath()
+								+ File.separator + ontosDir.getName() + "-backup");
+						if (!backupDir.exists())
+							backupDir.mkdir();
+						File backupFile = new File(backupDir.getAbsolutePath() + File.separator + file.getName());
+						log.info("Creating backup of file {} to {}", file, backupFile);
+						if (!backupFile.exists())
+							Files.copy(file.toPath(), backupFile.toPath());
+						else
+							log.info("File {} already exists, skipping.", backupFile);
+						log.warn(
+								"Replacing file {} with a copy where lines in question have been removed. Please note that the origin file is overwritten.",
+								file);
+						Files.delete(file.toPath());
+						AtomicInteger removedLines = BioPortalToolUtils.fixUmlsFile(backupFile, file);
+						log.info("{} lines have been removed from {}", removedLines, backupFile);
+						try {
+							extractNamesForOntology(file, submissionsDirectory, outputDir, ontologyLoader);
+						} catch (UnparsableOntologyException e2) {
+							log.error(
+									"Fixed file also couldn't be parsed. Deleting fixed file and giving up. The backup file is left at {}",
+									backupFile);
+							logUnparsableOntologies.error("File: {}", file, e);
+							// Files.delete(file.toPath());
+						}
+					} else {
+						logUnparsableOntologies.error("File: {}", file, e);
+					}
 				}
 			} else {
 				log.debug("Ignoring file \"{}\" because it doesn't look like an ontology file", file);
@@ -154,14 +193,14 @@ public class OntologyClassNameExtractor {
 
 	private void extractNamesForOntology(File ontologyFileOrDirectory, File submissionsDirectory, File outputDir,
 			OntologyLoader ontologyLoader) throws IOException, OWLOntologyCreationException {
-		log.debug("Processing file or directory \"{}\"", ontologyFileOrDirectory);
+		log.info("Processing file or directory \"{}\"", ontologyFileOrDirectory);
 		String acronym = BioPortalToolUtils.getAcronymFromFileName(ontologyFileOrDirectory);
 		File submissionFile = new File(submissionsDirectory.getAbsolutePath() + File.separator + acronym
 				+ BioPortalToolConstants.SUBMISSION_EXT);
 		AnnotationPropertySet properties = new AnnotationPropertySet(ontologyLoader.getOntologyManager(),
 				submissionFile);
 		File classesFile = new File(
-				outputDir.getAbsolutePath() + File.separator + acronym + BioPortalToolConstants.CLASSES_EXT);
+				outputDir.getAbsolutePath() + File.separator + acronym + BioPortalToolConstants.CLASSES_EXT + ".gz");
 		if (classesFile.exists() && classesFile.length() > 0) {
 			log.info("Classes file {} already exists and is not empty. Not extracting class names again.", classesFile);
 			return;
@@ -200,49 +239,54 @@ public class OntologyClassNameExtractor {
 			is = new GZIPInputStream(is);
 		OWLOntology o;
 		try {
+			log.debug("Loading ontology file {}", ontologyFile);
 			o = ontologyLoader.loadOntology(is);
+			log.trace("Loading done for {}", ontologyFile);
 		} catch (Error e) {
 			log.error("Error while loading ontology {}.", acronym);
 			throw e;
 		}
 
-		OWLReasoner reasoner = reasonerFactory.createReasoner(o);
-		
-		List<OntologyClass> classNames = new ArrayList<>();
-		Stream<OWLClass> classesInSignature = o.classesInSignature(Imports.INCLUDED);
-		for (Iterator<OWLClass> iterator = classesInSignature.iterator(); iterator.hasNext();) {
-			OWLClass c = iterator.next();
+		OWLReasoner reasoner = null;// reasonerFactory.createReasoner(o);
 
-			if (determineObsolete(ontologyFile, o, c, properties))
-				continue;
+		log.debug("Writing extracted class names for ontology {} to {}", acronym, classesFile);
+		try (OutputStream os = new GZIPOutputStream(new FileOutputStream(classesFile))) {
+//			List<OntologyClass> classNames = new ArrayList<>();
+			Stream<OWLClass> classesInSignature = o.classesInSignature(Imports.INCLUDED);
+			for (Iterator<OWLClass> iterator = classesInSignature.iterator(); iterator.hasNext();) {
+				OWLClass c = iterator.next();
 
-			if (c.getIRI().toString().endsWith("C16843")) {
-				Stream<OWLClassExpression> subClasses = EntitySearcher.getSubClasses(c, o);
-				subClasses.map(OWLClassExpression::asOWLClass).map(OWLClass::getIRI)
-						.forEach(id -> System.out.println(id));
+				if (determineObsolete(ontologyFile, o, c, properties)) {
+					log.trace("Excluding obsolete class {}", c.getIRI());
+					continue;
+				}
+
+				if (c.getIRI().toString().endsWith("C16843")) {
+					Stream<OWLClassExpression> subClasses = EntitySearcher.getSubClasses(c, o);
+					subClasses.map(OWLClassExpression::asOWLClass).map(OWLClass::getIRI)
+							.forEach(id -> System.out.println(id));
+				}
+
+				String preferredName = determinePreferredName(o, c, properties);
+				OntologyClassSynonyms synonyms = determineSynonyms(o, c, properties);
+				String definition = determineDefinition(o, c, properties);
+				OntologyClassParents ontologyClassParents = determineClassParents(o, c, reasoner);
+
+				OntologyClass ontologyClass = new OntologyClass();
+				ontologyClass.id = c.getIRI().toString();
+				ontologyClass.prefLabel = preferredName;
+				if (synonyms.synonyms != null && !synonyms.synonyms.isEmpty())
+					ontologyClass.synonym = synonyms;
+				if (!StringUtils.isBlank(definition))
+					ontologyClass.definition = Arrays.asList(definition);
+				if (ontologyClassParents.parents != null && !ontologyClassParents.parents.isEmpty())
+					ontologyClass.parents = ontologyClassParents;
+
+//				classNames.add(ontologyClass);
+				IOUtils.write(gson.toJson(ontologyClass) + "\n", os, "UTF-8");
 			}
 
-			String preferredName = determinePreferredName(o, c, properties);
-			OntologyClassSynonyms synonyms = determineSynonyms(o, c, properties);
-			String definition = determineDefinition(o, c, properties);
-			OntologyClassParents ontologyClassParents = determineClassParents(o, c, reasoner);
-
-			OntologyClass ontologyClass = new OntologyClass();
-			ontologyClass.id = c.getIRI().toString();
-			ontologyClass.prefLabel = preferredName;
-			if (synonyms.synonyms != null && !synonyms.synonyms.isEmpty())
-				ontologyClass.synonym = synonyms;
-			if (!StringUtils.isBlank(definition))
-				ontologyClass.definition = Arrays.asList(definition);
-			if (ontologyClassParents.parents != null && !ontologyClassParents.parents.isEmpty())
-				ontologyClass.parents = ontologyClassParents;
-
-			classNames.add(ontologyClass);
-		}
-
-		try (OutputStream os = new FileOutputStream(classesFile)) {
-			log.debug("Writing extracted class names for ontology {} to {}", acronym, classesFile);
-			IOUtils.write(gson.toJson(classNames) + "\n", os, "UTF-8");
+			
 		}
 
 		ontologyLoader.clearLoadedOntologies();
@@ -258,12 +302,15 @@ public class OntologyClassNameExtractor {
 	 * @return
 	 */
 	private OntologyClassParents determineClassParents(OWLOntology o, OWLClass c, OWLReasoner reasoner) {
-		// Stream<OWLClassExpression> superClasses =
-		// EntitySearcher.getSuperClasses(c, o);
-		Stream<OWLClass> superClasses = reasoner.getSuperClasses(c).entities();
+		Stream<OWLClassExpression> superClasses = reasoner != null
+				? reasoner.getSuperClasses(c).entities().map(OWLClassExpression.class::cast)
+				: EntitySearcher.getSuperClasses(c, o);
 		OntologyClassParents classParents = new OntologyClassParents();
-		for (Iterator<OWLClass> iterator = superClasses.iterator(); iterator.hasNext();) {
+		for (Iterator<OWLClassExpression> iterator = superClasses.iterator(); iterator.hasNext();) {
 			OWLClassExpression classExpr = iterator.next();
+			// TODO this check might actually break all that the reasoner has
+			// accomplished! Check! With the ontology that has a class whose ID
+			// ends with C16843...
 			if (!classExpr.isAnonymous()) {
 				OWLClass owlClass = classExpr.asOWLClass();
 				classParents.addParent(owlClass.getIRI().toString());

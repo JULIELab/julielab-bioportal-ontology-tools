@@ -46,12 +46,16 @@
 
 	<logger name="de.julielab.bioportal.ontologies.HttpHandler"
 		level="INFO" />
-	<logger
-		name="de.julielab.bioportal.ontologies.OntologyClassNameExtractor.unparsable"
+
+	<logger name="de.julielab.bioportal.ontologies.OntologyClassNameExtractor"
 		level="TRACE">
-		<appender-ref ref="FILE_UNPARSABLE" />
 	</logger>
 
+	<logger
+		name="de.julielab.bioportal.ontologies.OntologyClassNameExtractor.unparsable" additivity="false"
+		level="DEBUG">
+		<appender-ref ref="FILE_UNPARSABLE" />
+	</logger>
 
 	<root level="DEBUG">
 		<appender-ref ref="STDOUT" />
