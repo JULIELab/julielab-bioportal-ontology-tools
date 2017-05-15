@@ -1,5 +1,6 @@
 package de.julielab.bioportal.ontologies;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -7,6 +8,8 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.net.HttpURLConnection;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -170,7 +173,9 @@ public class OntologyDownloader {
 			log.debug("Fetching {} from BioPortal for {}", infoType, metaData.acronym);
 			HttpEntity propertiesResponse = httpHandler.sendGetRequest(address);
 			String infoString = EntityUtils.toString(propertiesResponse);
-			FileUtils.write(destFile, infoString, Charset.forName("UTF-8"), false);
+			try (Writer w = new BufferedWriter(new OutputStreamWriter(new GZIPOutputStream(new FileOutputStream(destFile)), Charset.forName("UTF-8")))) {
+				w.write(infoString);
+			}
 			return infoString;
 		} catch (ResourceDownloadException e) {
 			log.error("Error occured when trying to retrieve latest " + infoType + " of ontology " + metaData.acronym
@@ -196,15 +201,15 @@ public class OntologyDownloader {
 			this.ontologyDataDir = ontologyDataDir;
 			this.downloadStats = downloadStats;
 			this.metaDataFile = new File(ontologyInfoDir.getAbsolutePath() + File.separator + metaData.acronym
-					+ BioPortalToolConstants.METADATA_EXT);
+					+ BioPortalToolConstants.METADATA_EXT + ".gz");
 			this.submissionFile = new File(ontologyInfoDir.getAbsolutePath() + File.separator + metaData.acronym
-					+ BioPortalToolConstants.SUBMISSION_EXT);
+					+ BioPortalToolConstants.SUBMISSION_EXT + ".gz");
 			this.submissionsFile = new File(ontologyInfoDir.getAbsolutePath() + File.separator + metaData.acronym
-					+ BioPortalToolConstants.SUBMISSIONS_EXT);
+					+ BioPortalToolConstants.SUBMISSIONS_EXT + ".gz");
 			this.projectsFile = new File(ontologyInfoDir.getAbsolutePath() + File.separator + metaData.acronym
-					+ BioPortalToolConstants.PROJECTS_EXT);
+					+ BioPortalToolConstants.PROJECTS_EXT + ".gz");
 			this.analyticsFile = new File(ontologyInfoDir.getAbsolutePath() + File.separator + metaData.acronym
-					+ BioPortalToolConstants.ANALYTICS_EXT);
+					+ BioPortalToolConstants.ANALYTICS_EXT + ".gz");
 		}
 
 		public OntologyMetaData getOntologyMetaData() {
@@ -376,16 +381,18 @@ public class OntologyDownloader {
 					while (entry != null) {
 						++numEntries;
 						String filename = entry.getName();
-						
-						outputFile = new File(ontologyDataDir.getAbsolutePath() + File.separator
-								+ ontoInf.acronym + File.separator + filename + ".gz");
+
+						outputFile = new File(ontologyDataDir.getAbsolutePath() + File.separator + ontoInf.acronym
+								+ File.separator + filename + ".gz");
 						if (!outputFile.getAbsoluteFile().getParentFile().exists())
 							outputFile.getAbsoluteFile().getParentFile().mkdirs();
 						writeStreamToFile(zipStream, outputFile);
 						entry = zipStream.getNextEntry();
 					}
 					if (numEntries == 1) {
-						log.info("Downloaded ZIP file {} for ontology {} only contained a single entry. Moving it to {}", new Object[] {downloadFileName, ontoInf.acronym, ontologyFile});
+						log.info(
+								"Downloaded ZIP file {} for ontology {} only contained a single entry. Moving it to {}",
+								new Object[] { downloadFileName, ontoInf.acronym, ontologyFile });
 						Files.move(outputFile.toPath(), ontologyFile.toPath());
 						Files.delete(ontologyDir.toPath());
 					}
