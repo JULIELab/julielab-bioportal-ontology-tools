@@ -9,6 +9,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -323,7 +324,7 @@ public class OntologyDownloader {
 					ontologyFile.getAbsolutePath());
 			return;
 		}
-		// "ontologyDir" because some ontologies actually consist of multiple files, those are stored
+		// some ontologies actually consist of multiple files, those are stored
 		// in a directory of their own
 		File ontologyDir = new File(ontologyDataDir.getAbsolutePath() + File.separator + ontoInf.acronym);
 		if (ontologyDir.exists()) {
@@ -370,11 +371,23 @@ public class OntologyDownloader {
 					new File(ontologyDataDir.getAbsolutePath() + File.separator + ontoInf.acronym).mkdir();
 					ZipInputStream zipStream = new ZipInputStream(is, Charset.forName("UTF-8"));
 					ZipEntry entry = zipStream.getNextEntry();
+					int numEntries = 0;
+					File outputFile = null;
 					while (entry != null) {
+						++numEntries;
 						String filename = entry.getName();
-						writeStreamToFile(zipStream, new File(ontologyDataDir.getAbsolutePath() + File.separator
-								+ ontoInf.acronym + File.separator + filename + ".gz"));
+						
+						outputFile = new File(ontologyDataDir.getAbsolutePath() + File.separator
+								+ ontoInf.acronym + File.separator + filename + ".gz");
+						if (!outputFile.getAbsoluteFile().getParentFile().exists())
+							outputFile.getAbsoluteFile().getParentFile().mkdirs();
+						writeStreamToFile(zipStream, outputFile);
 						entry = zipStream.getNextEntry();
+					}
+					if (numEntries == 1) {
+						log.info("Downloaded ZIP file {} for ontology {} only contained a single entry. Moving it to {}", new Object[] {downloadFileName, ontoInf.acronym, ontologyFile});
+						Files.move(outputFile.toPath(), ontologyFile.toPath());
+						Files.delete(ontologyDir.toPath());
 					}
 				} else {
 					writeStreamToFile(is, ontologyFile);
