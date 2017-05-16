@@ -1,11 +1,7 @@
 package de.julielab.bioportal.ontologies;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FilenameFilter;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -20,8 +16,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -143,13 +137,12 @@ public class OntologyClassNameExtractor {
 
 		@Override
 		public Void call() throws Exception {
-			String lcfn = file.getName().toLowerCase();
-			if (lcfn.contains(".obo") || lcfn.contains(".owl") || lcfn.contains(".umls") || file.isDirectory()) {
+			if (BioPortalToolUtils.isSupportedOntologyFile(file) || file.isDirectory()) {
 				try {
 					extractNamesForOntology(file, submissionsDirectory, outputDir, ontologyLoader);
 				} catch (UnparsableOntologyException e) {
 					log.error("Could not parse ontology file {}", file);
-					if (lcfn.contains(".umls")) {
+					if (BioPortalToolUtils.isUMLSOntology(file)) {
 						log.warn("The unparsable ontology is in UMLS format. Those have sometimes issues by chemical"
 								+ " names containing the character sequence ''' which is mistakenly interpreted as a string"
 								+ " end quote for \"\"\" by the turtle parser in OWL API 5.x. It will be tried to remove such"
@@ -177,7 +170,7 @@ public class OntologyClassNameExtractor {
 									"Fixed file also couldn't be parsed. Deleting fixed file and giving up. The backup file is left at {}",
 									backupFile);
 							logUnparsableOntologies.error("File: {}", file, e);
-							// Files.delete(file.toPath());
+							Files.delete(file.toPath());
 						}
 					} else {
 						logUnparsableOntologies.error("File: {}", file, e);
@@ -196,7 +189,7 @@ public class OntologyClassNameExtractor {
 		log.info("Processing file or directory \"{}\"", ontologyFileOrDirectory);
 		String acronym = BioPortalToolUtils.getAcronymFromFileName(ontologyFileOrDirectory);
 		File submissionFile = new File(submissionsDirectory.getAbsolutePath() + File.separator + acronym
-				+ BioPortalToolConstants.SUBMISSION_EXT);
+				+ BioPortalToolConstants.SUBMISSION_EXT + ".gz");
 		AnnotationPropertySet properties = new AnnotationPropertySet(ontologyLoader.getOntologyManager(),
 				submissionFile);
 		File classesFile = new File(
@@ -206,57 +199,54 @@ public class OntologyClassNameExtractor {
 			return;
 		}
 
-		File ontologyFile = ontologyFileOrDirectory;
-		// Sometimes there are multiple files associated with one ontology where
-		// a main file imports the others.
-		if (ontologyFile.isDirectory()) {
-			File[] mainFileCandidates = ontologyFileOrDirectory.listFiles(new FilenameFilter() {
-
-				@Override
-				public boolean accept(File dir, String name) {
-					return BioPortalToolUtils.getAcronymFromFileName(name.toLowerCase())
-							.equals(BioPortalToolUtils.getAcronymFromFileName(acronym.toLowerCase()));
-				}
-			});
-			if (mainFileCandidates == null || mainFileCandidates.length == 0) {
-				log.error(
-						"For ontology {} a directory of files is given. Could not identify the main file. Skipping this ontology.",
-						acronym);
-				return;
-			} else if (mainFileCandidates.length > 1) {
-				log.error(
-						"For ontology {} a directory of files is given. Main file name is ambiguous: {}. Skipping this ontology",
-						acronym, mainFileCandidates);
-				return;
-			}
-			ontologyFile = mainFileCandidates[0];
-			log.debug("Identified file {} as the main file for ontology {}", ontologyFile, acronym);
-		}
-
-		String lcfn = ontologyFile.getName().toLowerCase();
-		InputStream is = new FileInputStream(ontologyFile);
-		if (lcfn.endsWith(".gzip") || lcfn.endsWith(".gz"))
-			is = new GZIPInputStream(is);
+//		File ontologyFile = ontologyFileOrDirectory;
+//		// Sometimes there are multiple files associated with one ontology where
+//		// a main file imports the others.
+//		if (ontologyFile.isDirectory()) {
+//			File[] mainFileCandidates = ontologyFileOrDirectory.listFiles(new FilenameFilter() {
+//
+//				@Override
+//				public boolean accept(File dir, String name) {
+//					return BioPortalToolUtils.getAcronymFromFileName(name.toLowerCase())
+//							.equals(BioPortalToolUtils.getAcronymFromFileName(acronym.toLowerCase()));
+//				}
+//			});
+//			if (mainFileCandidates == null || mainFileCandidates.length == 0) {
+//				log.error(
+//						"For ontology {} a directory of files is given. Could not identify the main file. Skipping this ontology.",
+//						acronym);
+//				return;
+//			} else if (mainFileCandidates.length > 1) {
+//				log.error(
+//						"For ontology {} a directory of files is given. Main file name is ambiguous: {}. Skipping this ontology",
+//						acronym, mainFileCandidates);
+//				return;
+//			}
+//			ontologyFile = mainFileCandidates[0];
+//			log.debug("Identified file {} as the main file for ontology {}", ontologyFile, acronym);
+//		}
+//
+//		InputStream is = BioPortalToolUtils.getInputStreamFromFile(ontologyFile);
 		OWLOntology o;
 		try {
-			log.debug("Loading ontology file {}", ontologyFile);
-			o = ontologyLoader.loadOntology(is);
-			log.trace("Loading done for {}", ontologyFile);
+			log.debug("Loading ontology from {} {}", ontologyFileOrDirectory.isFile() ? "file" : "directory", ontologyFileOrDirectory);
+//			o = ontologyLoader.loadOntology(is);
+			o = ontologyLoader.loadOntology(ontologyFileOrDirectory);
+			log.trace("Loading done for {}", ontologyFileOrDirectory);
 		} catch (Error e) {
 			log.error("Error while loading ontology {}.", acronym);
 			throw e;
 		}
 
-		OWLReasoner reasoner = null;// reasonerFactory.createReasoner(o);
+		OWLReasoner reasoner = reasonerFactory.createReasoner(o);
 
 		log.debug("Writing extracted class names for ontology {} to {}", acronym, classesFile);
-		try (OutputStream os = new GZIPOutputStream(new FileOutputStream(classesFile))) {
-//			List<OntologyClass> classNames = new ArrayList<>();
+		try (OutputStream os = BioPortalToolUtils.getOutputStreamToFile(classesFile)) {
 			Stream<OWLClass> classesInSignature = o.classesInSignature(Imports.INCLUDED);
 			for (Iterator<OWLClass> iterator = classesInSignature.iterator(); iterator.hasNext();) {
 				OWLClass c = iterator.next();
 
-				if (determineObsolete(ontologyFile, o, c, properties)) {
+				if (determineObsolete(o, c, properties)) {
 					log.trace("Excluding obsolete class {}", c.getIRI());
 					continue;
 				}
@@ -282,11 +272,9 @@ public class OntologyClassNameExtractor {
 				if (ontologyClassParents.parents != null && !ontologyClassParents.parents.isEmpty())
 					ontologyClass.parents = ontologyClassParents;
 
-//				classNames.add(ontologyClass);
 				IOUtils.write(gson.toJson(ontologyClass) + "\n", os, "UTF-8");
 			}
 
-			
 		}
 
 		ontologyLoader.clearLoadedOntologies();
@@ -314,6 +302,8 @@ public class OntologyClassNameExtractor {
 			if (!classExpr.isAnonymous()) {
 				OWLClass owlClass = classExpr.asOWLClass();
 				classParents.addParent(owlClass.getIRI().toString());
+			} else {
+				log.info("NonAnon: " + classExpr.asOWLClass().getIRI());
 			}
 		}
 
@@ -422,7 +412,7 @@ public class OntologyClassNameExtractor {
 		return c.getIRI().getRemainder().orElse(null);
 	}
 
-	private boolean determineObsolete(File ontologyFile, OWLOntology o, OWLClass c, AnnotationPropertySet properties) {
+	private boolean determineObsolete(OWLOntology o, OWLClass c, AnnotationPropertySet properties) {
 		boolean isObsolete = false;
 		for (OWLAnnotationProperty obsoleteProp : properties.getObsoleteProps()) {
 			Stream<OWLAnnotation> obsoleteAnnotations = EntitySearcher.getAnnotations(c, o, obsoleteProp);
@@ -431,7 +421,7 @@ public class OntologyClassNameExtractor {
 				String literal = ((OWLLiteral) owlAnnotation.getValue()).getLiteral().toLowerCase();
 				if (!literal.equals("true") && !literal.equals("false"))
 					log.warn("The obsolete property value of class {} of ontology {} is neither true nor false",
-							c.getIRI(), ontologyFile);
+							c.getIRI(), o.getOntologyID());
 				// for the weird case that there are multiple obsolete
 				// annotations we consider a class obsolete if at least one
 				// property says so
