@@ -1,13 +1,19 @@
 package de.julielab.bioportal.util;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.io.Reader;
+import java.io.Writer;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -38,6 +44,16 @@ public class BioPortalToolUtils {
 	 */
 	public static Gson getGson() {
 		return new GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ssX").create();
+	}
+
+	public static boolean isSupportedOntologyFile(File file) {
+		String lcfn = file.getName().toLowerCase();
+		return lcfn.contains(".obo") || lcfn.contains(".owl") || lcfn.contains(".umls");
+	}
+
+	public static boolean isUMLSOntology(File file) {
+		String lcfn = file.getName().toLowerCase();
+		return lcfn.contains(".umls");
 	}
 
 	public static AtomicInteger fixUmlsFile(File original, File target) throws BioPortalOntologyToolsException {
@@ -89,6 +105,52 @@ public class BioPortalToolUtils {
 		}
 
 		return removedLines;
+	}
+
+	/**
+	 * Returns an {@link InputStream} for <tt>file</tt>. Automatically wraps in
+	 * an {@link BufferedInputStream} and also in an {@link GZIPInputStream} if
+	 * the file name ends with .gz or .gzip.
+	 * 
+	 * @param file
+	 *            The file to read.
+	 * @return A buffered input stream.
+	 * @throws IOException
+	 *             If there is an error during reading.
+	 */
+	public static InputStream getInputStreamFromFile(File file) throws IOException {
+		InputStream is = new FileInputStream(file);
+		String lcfn = file.getName().toLowerCase();
+		if (lcfn.contains(".gz") || lcfn.contains(".gzip"))
+			is = new GZIPInputStream(is);
+		return new BufferedInputStream(is);
+	}
+
+	/**
+	 * Returns an {@link OutputStream} for <tt>file</tt>. Automatically wraps in
+	 * an {@link BufferedOutputStream} and also in an {@link GZIPOutputStream}
+	 * if the file name ends with .gz or .gzip.
+	 * 
+	 * @param file
+	 *            The file to write.
+	 * @return A buffered output stream.
+	 * @throws IOException
+	 *             If there is an error during stream creation.
+	 */
+	public static OutputStream getOutputStreamToFile(File file) throws IOException {
+		OutputStream os = new FileOutputStream(file);
+		String lcfn = file.getName().toLowerCase();
+		if (lcfn.contains(".gz") || lcfn.contains(".gzip"))
+			os = new GZIPOutputStream(os);
+		return new BufferedOutputStream(os);
+	}
+	
+	public static Reader getReaderFromFile(File file) throws IOException {
+		return new BufferedReader(new InputStreamReader(getInputStreamFromFile(file), "UTF-8"));
+	}
+	
+	public static Writer getWriterToFile(File file) throws IOException {
+		return new BufferedWriter(new OutputStreamWriter(getOutputStreamToFile(file), "UTF-8"));
 	}
 
 }

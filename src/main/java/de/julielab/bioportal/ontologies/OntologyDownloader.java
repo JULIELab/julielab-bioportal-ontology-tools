@@ -1,18 +1,16 @@
 package de.julielab.bioportal.ontologies;
 
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.net.HttpURLConnection;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -167,13 +165,13 @@ public class OntologyDownloader {
 			IOException {
 		if (destFile.exists() && destFile.length() > 0) {
 			log.info("The file {} exists and is not empty. It is kept, download of the file is skipped.", destFile);
-			return IOUtils.toString(destFile.toURI(), Charset.forName("UTF-8"));
+			return IOUtils.toString(BioPortalToolUtils.getInputStreamFromFile(destFile));
 		}
 		try {
 			log.debug("Fetching {} from BioPortal for {}", infoType, metaData.acronym);
 			HttpEntity propertiesResponse = httpHandler.sendGetRequest(address);
 			String infoString = EntityUtils.toString(propertiesResponse);
-			try (Writer w = new BufferedWriter(new OutputStreamWriter(new GZIPOutputStream(new FileOutputStream(destFile)), Charset.forName("UTF-8")))) {
+			try (Writer w = BioPortalToolUtils.getWriterToFile(destFile)) {
 				w.write(infoString);
 			}
 			return infoString;
@@ -333,13 +331,7 @@ public class OntologyDownloader {
 		// in a directory of their own
 		File ontologyDir = new File(ontologyDataDir.getAbsolutePath() + File.separator + ontoInf.acronym);
 		if (ontologyDir.exists()) {
-			String[] list = ontologyDir.list(new FilenameFilter() {
-
-				@Override
-				public boolean accept(File dir, String name) {
-					return !name.equals(".DS_Store");
-				}
-			});
+			String[] list = ontologyDir.list((dir, name) -> !name.equals(".DS_Store"));
 			if (null != list && list.length != 0)
 				log.info(
 						"Ontology directory {} exists and is not empty. The directory and its files are kept and not downloaded again.",
@@ -395,6 +387,8 @@ public class OntologyDownloader {
 								new Object[] { downloadFileName, ontoInf.acronym, ontologyFile });
 						Files.move(outputFile.toPath(), ontologyFile.toPath());
 						Files.delete(ontologyDir.toPath());
+					} else {
+						Files.write(Paths.get(ontologyDataDir.getAbsolutePath() + File.separator + ontoInf.acronym + File.separator + BioPortalToolConstants.DOWNLOAD_FILENAME), downloadFileName.getBytes());
 					}
 				} else {
 					writeStreamToFile(is, ontologyFile);

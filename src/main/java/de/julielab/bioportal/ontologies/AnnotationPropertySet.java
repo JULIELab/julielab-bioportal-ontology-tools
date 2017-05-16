@@ -1,7 +1,6 @@
 package de.julielab.bioportal.ontologies;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -48,7 +47,7 @@ public class AnnotationPropertySet {
 	public AnnotationPropertySet(OWLOntologyManager ontologyManager, File submissionFile)
 			throws FileNotFoundException, IOException {
 		Gson gson = BioPortalToolUtils.getGson();
-		String submissionString = IOUtils.toString(new FileInputStream(submissionFile));
+		String submissionString = IOUtils.toString(BioPortalToolUtils.getInputStreamFromFile(submissionFile));
 		Submission submission = gson.fromJson(submissionString, Submission.class);
 		setupAnnotationProperties(ontologyManager, submission);
 	}

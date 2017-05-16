@@ -1,4 +1,3 @@
 #!/bin/bash
-ASSEMBLY=`ls target/julielab-*-assembly*jar`
-echo "Using file $ASSEMBLY as application archive"
-java -cp $ASSEMBLY de.julielab.bioportal.ontologies.apps.NameExtractor $*
+
+java -cp "target/classes:target/lib/*" de.julielab.bioportal.ontologies.apps.NameExtractor $*
