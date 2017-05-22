@@ -61,18 +61,105 @@ public class OntologyClassNameExtractor {
 	private ExecutorService executor;
 	private OWLReasonerFactory reasonerFactory;
 
+	/**
+	 * Constructs an <tt>OntologyClassNameExtractor</tt> with a fixed threadpool
+	 * of size 4 and no reasoning.
+	 */
 	public OntologyClassNameExtractor() {
-		this.gson = BioPortalToolUtils.getGson();
-		// TODO allow to pass the service
-		this.executor = Executors.newFixedThreadPool(8);
-		reasonerFactory = new org.semanticweb.HermiT.ReasonerFactory();
+		this(Executors.newFixedThreadPool(4), false);
 	}
 
+	/**
+	 * Constructs an <tt>OntologyClassNameExtractor</tt> with he given
+	 * {@link ExecutorService} for multithreading and prepares a HermiT
+	 * {@link OWLReasonerFactory} if <tt>applyReasoning</tt> is set to
+	 * <tt>true</tt>.
+	 * 
+	 * @param executor
+	 *            An <tt>ExecutorService</tt> for parallel name extraction in
+	 *            case of multiple input ontologies.
+	 * @param applyReasoning
+	 *            If set to <tt>true</tt>, a reasoner will be used to determine
+	 *            super- and subclass relationships. This is employed to find
+	 *            the parent concepts of ontology classes. Should be switched
+	 *            off if the parent information is not required by the
+	 *            application since reasoning takes substantial time and space.
+	 */
+	public OntologyClassNameExtractor(ExecutorService executor, boolean applyReasoning) {
+		this.gson = BioPortalToolUtils.getGson();
+		this.executor = executor;
+		if (applyReasoning)
+			reasonerFactory = new org.semanticweb.HermiT.ReasonerFactory();
+
+	}
+
+	/**
+	 * Starts the extraction of ontology class names of ontologies in the
+	 * <tt>input</tt> directory. The results are written in JSON format into the
+	 * <tt>outputDir</tt> directory.
+	 * 
+	 * @param input
+	 *            A directory of ontologies or a single ontology file.
+	 * @param submissionsDirectory
+	 *            The directory that holds the - via {link OntologyDownloader} -
+	 *            downloaded submission information about each ontology. It is
+	 *            used to determine the correct properties for preferred name,
+	 *            synonyms and description for classes.
+	 * @param outputDir
+	 *            The directory where to store the extracted class names to.
+	 * @return The number of processed Ontologies.
+	 * @throws IOException
+	 *             If reading or writing goes wrong.
+	 * @throws OWLOntologyCreationException
+	 *             If an ontology cannot be loaded.
+	 * @throws InterruptedException
+	 *             Ontology name extraction is done using an
+	 *             {@link ExecutorService}. This exception may be thrown if a
+	 *             worker thread is interrupted.
+	 * @throws ExecutionException
+	 *             If the thread execution files for a worker thread.
+	 */
 	public int run(File input, File submissionsDirectory, File output)
 			throws OWLOntologyCreationException, IOException, InterruptedException, ExecutionException {
 		return run(input, submissionsDirectory, output, null);
 	}
 
+	/**
+	 * Starts the extraction of ontology class names of ontologies in the
+	 * <tt>input</tt> directory. The results are written in JSON format into the
+	 * <tt>outputDir</tt> directory. The <tt>ontologiesToExtract</tt> set is
+	 * used to restrict name extraction only to those ontologies where the
+	 * ontology file name without extension (i.e. the filename up to the first
+	 * dot) is contained in the set. For BioPortal ontologies that have been
+	 * downloaded using the {@link OntologyDownloader}, this is just the
+	 * acronym.
+	 * 
+	 * @param input
+	 *            A directory of ontologies or a single ontology file.
+	 * @param submissionsDirectory
+	 *            The directory that holds the - via {link OntologyDownloader} -
+	 *            downloaded submission information about each ontology. It is
+	 *            used to determine the correct properties for preferred name,
+	 *            synonyms and description for classes.
+	 * @param outputDir
+	 *            The directory where to store the extracted class names to.
+	 * @param ontologiesToExtract
+	 *            A set of ontology identifiers - based on the ontology's file
+	 *            names - for which name extraction should be performed. An
+	 *            empty or <tt>null</tt> set means that all ontologies will be
+	 *            processed.
+	 * @return The number of processed Ontologies.
+	 * @throws IOException
+	 *             If reading or writing goes wrong.
+	 * @throws OWLOntologyCreationException
+	 *             If an ontology cannot be loaded.
+	 * @throws InterruptedException
+	 *             Ontology name extraction is done using an
+	 *             {@link ExecutorService}. This exception may be thrown if a
+	 *             worker thread is interrupted.
+	 * @throws ExecutionException
+	 *             If the thread execution files for a worker thread.
+	 */
 	public int run(File input, File submissionsDirectory, File outputDir, Set<String> ontologiesToExtract)
 			throws IOException, OWLOntologyCreationException, InterruptedException, ExecutionException {
 		if (!outputDir.exists())
@@ -118,6 +205,14 @@ public class OntologyClassNameExtractor {
 		return numOntologies;
 	}
 
+	/**
+	 * These workers are used to extract ontology names for multiple ontologies
+	 * in parallel. They basically just call
+	 * {@link OntologyClassNameExtractor#extractNamesForOntology(File, File, File, OntologyLoader)}.
+	 * 
+	 * @author faessler
+	 *
+	 */
 	private class NameExtractorWorker implements Callable<Void> {
 
 		private File file;
@@ -200,7 +295,8 @@ public class OntologyClassNameExtractor {
 
 		OWLOntology o;
 		try {
-			log.debug("Loading ontology from {} {}", ontologyFileOrDirectory.isFile() ? "file" : "directory", ontologyFileOrDirectory);
+			log.debug("Loading ontology from {} {}", ontologyFileOrDirectory.isFile() ? "file" : "directory",
+					ontologyFileOrDirectory);
 			o = ontologyLoader.loadOntology(ontologyFileOrDirectory);
 			log.trace("Loading done for {}", ontologyFileOrDirectory);
 		} catch (Error e) {
