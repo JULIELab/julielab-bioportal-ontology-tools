@@ -41,7 +41,6 @@ import de.julielab.bioportal.ontologies.data.OntologyClass;
 import de.julielab.bioportal.ontologies.data.OntologyClassParents;
 import de.julielab.bioportal.ontologies.data.OntologyClassSynonyms;
 import de.julielab.bioportal.util.BioPortalToolUtils;
-import uk.ac.manchester.cs.jfact.JFactFactory;
 
 /**
  * The error "[Fatal Error] :1:1: Content is not allowed in prolog." for OBO
@@ -66,7 +65,7 @@ public class OntologyClassNameExtractor {
 		this.gson = BioPortalToolUtils.getGson();
 		// TODO allow to pass the service
 		this.executor = Executors.newFixedThreadPool(8);
-		reasonerFactory = new JFactFactory();
+		reasonerFactory = new org.semanticweb.HermiT.ReasonerFactory();
 	}
 
 	public int run(File input, File submissionsDirectory, File output)
@@ -199,38 +198,9 @@ public class OntologyClassNameExtractor {
 			return;
 		}
 
-//		File ontologyFile = ontologyFileOrDirectory;
-//		// Sometimes there are multiple files associated with one ontology where
-//		// a main file imports the others.
-//		if (ontologyFile.isDirectory()) {
-//			File[] mainFileCandidates = ontologyFileOrDirectory.listFiles(new FilenameFilter() {
-//
-//				@Override
-//				public boolean accept(File dir, String name) {
-//					return BioPortalToolUtils.getAcronymFromFileName(name.toLowerCase())
-//							.equals(BioPortalToolUtils.getAcronymFromFileName(acronym.toLowerCase()));
-//				}
-//			});
-//			if (mainFileCandidates == null || mainFileCandidates.length == 0) {
-//				log.error(
-//						"For ontology {} a directory of files is given. Could not identify the main file. Skipping this ontology.",
-//						acronym);
-//				return;
-//			} else if (mainFileCandidates.length > 1) {
-//				log.error(
-//						"For ontology {} a directory of files is given. Main file name is ambiguous: {}. Skipping this ontology",
-//						acronym, mainFileCandidates);
-//				return;
-//			}
-//			ontologyFile = mainFileCandidates[0];
-//			log.debug("Identified file {} as the main file for ontology {}", ontologyFile, acronym);
-//		}
-//
-//		InputStream is = BioPortalToolUtils.getInputStreamFromFile(ontologyFile);
 		OWLOntology o;
 		try {
 			log.debug("Loading ontology from {} {}", ontologyFileOrDirectory.isFile() ? "file" : "directory", ontologyFileOrDirectory);
-//			o = ontologyLoader.loadOntology(is);
 			o = ontologyLoader.loadOntology(ontologyFileOrDirectory);
 			log.trace("Loading done for {}", ontologyFileOrDirectory);
 		} catch (Error e) {
@@ -238,7 +208,7 @@ public class OntologyClassNameExtractor {
 			throw e;
 		}
 
-		OWLReasoner reasoner = reasonerFactory.createReasoner(o);
+		OWLReasoner reasoner = reasonerFactory != null ? reasonerFactory.createReasoner(o) : null;
 
 		log.debug("Writing extracted class names for ontology {} to {}", acronym, classesFile);
 		try (OutputStream os = BioPortalToolUtils.getOutputStreamToFile(classesFile)) {
@@ -249,12 +219,6 @@ public class OntologyClassNameExtractor {
 				if (determineObsolete(o, c, properties)) {
 					log.trace("Excluding obsolete class {}", c.getIRI());
 					continue;
-				}
-
-				if (c.getIRI().toString().endsWith("C16843")) {
-					Stream<OWLClassExpression> subClasses = EntitySearcher.getSubClasses(c, o);
-					subClasses.map(OWLClassExpression::asOWLClass).map(OWLClass::getIRI)
-							.forEach(id -> System.out.println(id));
 				}
 
 				String preferredName = determinePreferredName(o, c, properties);
@@ -296,14 +260,9 @@ public class OntologyClassNameExtractor {
 		OntologyClassParents classParents = new OntologyClassParents();
 		for (Iterator<OWLClassExpression> iterator = superClasses.iterator(); iterator.hasNext();) {
 			OWLClassExpression classExpr = iterator.next();
-			// TODO this check might actually break all that the reasoner has
-			// accomplished! Check! With the ontology that has a class whose ID
-			// ends with C16843...
 			if (!classExpr.isAnonymous()) {
 				OWLClass owlClass = classExpr.asOWLClass();
 				classParents.addParent(owlClass.getIRI().toString());
-			} else {
-				log.info("NonAnon: " + classExpr.asOWLClass().getIRI());
 			}
 		}
 
