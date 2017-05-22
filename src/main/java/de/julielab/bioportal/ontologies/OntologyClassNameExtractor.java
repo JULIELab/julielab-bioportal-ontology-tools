@@ -127,12 +127,14 @@ public class OntologyClassNameExtractor {
 	/**
 	 * Starts the extraction of ontology class names of ontologies in the
 	 * <tt>input</tt> directory. The results are written in JSON format into the
-	 * <tt>outputDir</tt> directory. The <tt>ontologiesToExtract</tt> set is
-	 * used to restrict name extraction only to those ontologies where the
-	 * ontology file name without extension (i.e. the filename up to the first
-	 * dot) is contained in the set. For BioPortal ontologies that have been
-	 * downloaded using the {@link OntologyDownloader}, this is just the
-	 * acronym.
+	 * <tt>outputDir</tt> directory. The output contains the preferred name or
+	 * label of ontology classes, their synonyms, their definition or
+	 * description and their super classes / parents. Classes marked as obsolete
+	 * are omitted. The <tt>ontologiesToExtract</tt> set is used to restrict
+	 * name extraction only to those ontologies where the ontology file name
+	 * without extension (i.e. the filename up to the first dot) is contained in
+	 * the set. For BioPortal ontologies that have been downloaded using the
+	 * {@link OntologyDownloader}, this is just the acronym.
 	 * 
 	 * @param input
 	 *            A directory of ontologies or a single ontology file.
@@ -278,6 +280,26 @@ public class OntologyClassNameExtractor {
 
 	}
 
+	/**
+	 * Extracts the class names (preferred name / label, synonyms, description /
+	 * definition, super classes / parent IDs) of the ontologies or ontology
+	 * found at the path given by <tt>ontologyFileOrDirectory</tt>. The
+	 * extracted information is written to <tt>outputDir</tt> in JSON format.
+	 * 
+	 * @param ontologyFileOrDirectory
+	 *            Ontology/ies to extract class information from.
+	 * @param submissionsDirectory
+	 *            The directory storing the ontology submissions as downloaded
+	 *            from {@link OntologyDownloader}.
+	 * @param outputDir
+	 *            The directory to store the extracted class names to.
+	 * @param ontologyLoader
+	 *            An ontology loader.
+	 * @throws IOException
+	 *             If reading or writing goes wrong.
+	 * @throws OWLOntologyCreationException
+	 *             If loading an ontology fails.
+	 */
 	private void extractNamesForOntology(File ontologyFileOrDirectory, File submissionsDirectory, File outputDir,
 			OntologyLoader ontologyLoader) throws IOException, OWLOntologyCreationException {
 		log.info("Processing file or directory \"{}\"", ontologyFileOrDirectory);
