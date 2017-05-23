@@ -67,13 +67,14 @@ public class MappingDownloader {
 		executorService = Executors.newFixedThreadPool(6);
 	}
 
-	public void downloadOntologyMappings(File mappingsDir, Set<String> ontologiesToDownload) throws ParseException,
+	public void downloadOntologyMappings(File mappingsDir, File ontosDir, Set<String> ontologiesToDownload) throws ParseException,
 			IOException, BioPortalOntologyToolsException {
 		errors.info("------- Error report for download beginning at " + (new Date())
 				+ " ---------\n", "UTF-8", true);
 		
 		List<OntologyMetaData> ontologiesMetaData = ontologyListRetriver.getOntologiesMetaData(null, ontologiesToDownload);
 		removeAlreadyDownloadedButLast(ontologiesMetaData, mappingsDir);
+		removeNotInOntologiesDirectory(ontologiesMetaData, ontosDir);
 		log.info("Starting the download of mappings for {} ontologies.", ontologiesMetaData.size());
 		List<Future<?>> futures = new ArrayList<>();
 		for (int i = 0; i < ontologiesMetaData.size(); i++) {
@@ -100,6 +101,28 @@ public class MappingDownloader {
 		executorService.shutdown();
 	}
 	
+	private void removeNotInOntologiesDirectory(List<OntologyMetaData> ontologiesMetaData, File ontosDir) {
+		log.info("Removing ontologies from the mapping download list that are not found in directory {}", ontosDir);
+		File[] ontologyFiles = ontosDir.listFiles(f -> !f.getName().equals(".DS_Store"));
+		// First, collect all the acronyms of ontologies in the given directory
+		Set<String> foundAcronyms = new HashSet<>();
+		for (int i = 0; i < ontologyFiles.length; i++) {
+			File file = ontologyFiles[i];
+			String acronym = BioPortalToolUtils.getAcronymFromFileName(file);
+			foundAcronyms.add(acronym);
+		}
+		log.debug("Found ontologies: {}", foundAcronyms);
+		// No remove those ontologies from the ontologiesMetaData that have not been found in the ontologies directory.
+		for(Iterator<OntologyMetaData> it = ontologiesMetaData.iterator(); it.hasNext();) {
+			OntologyMetaData metaData = it.next();
+			System.out.println(metaData.acronym);
+			if (!foundAcronyms.contains(metaData.acronym)) {
+				log.debug("Removing ontology {} for mapping download because it was not found in directory {}", metaData.acronym, ontosDir);
+				it.remove();
+			}
+		}
+	}
+
 	private class DownloadWorker implements Runnable {
 
 		private OntologyMetaData ontologyMetaData;

@@ -49,10 +49,12 @@ public class OntologyListRetriver {
 																					// blocks
 		}.getType();
 
+		log.info("Requesting ontology list from BioPortal");
 		HttpEntity response = httpHandler
 				.sendGetRequest("http://data.bioontology.org/ontologies?include=" + metaDataInclude);
 		String responseString = EntityUtils.toString(response);
 		List<OntologyMetaData> ontologiesMetaData = gson.fromJson(responseString, fromJsonConversionListType);
+		log.info("Retrieved meta data of {} ontologies", ontologiesMetaData.size());
 
 		// Filter for explicitly requested ontologies.
 		for (Iterator<OntologyMetaData> iterator = ontologiesMetaData.iterator(); iterator.hasNext();) {
