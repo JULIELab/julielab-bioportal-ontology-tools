@@ -20,9 +20,19 @@
 		</encoder>
 	</appender>
 
-
 	<appender name="FILE_UNPARSABLE" class="ch.qos.logback.core.FileAppender">
 		<file>unparsable.log</file>
+		<append>true</append>
+		<!-- encoders are assigned the type ch.qos.logback.classic.encoder.PatternLayoutEncoder 
+			by default -->
+		<encoder>
+			<pattern>%msg%n
+			</pattern>
+		</encoder>
+	</appender>
+	
+	<appender name="FILE_MAPPING_DOWNLOAD_ERRORS" class="ch.qos.logback.core.FileAppender">
+		<file>MAPPING_DOWNLOAD_ERRORS.log</file>
 		<append>true</append>
 		<!-- encoders are assigned the type ch.qos.logback.classic.encoder.PatternLayoutEncoder 
 			by default -->
@@ -55,6 +65,10 @@
 		name="de.julielab.bioportal.ontologies.OntologyClassNameExtractor.unparsable" additivity="false"
 		level="DEBUG">
 		<appender-ref ref="FILE_UNPARSABLE" />
+	</logger>
+	
+	<logger name="de.julielab.bioportal.ontologies.MappingDownloader.downloaderrors" additivity="false" level="INFO">
+		<appender-ref ref="FILE_MAPPING_DOWNLOAD_ERRORS"/>
 	</logger>
 
 	<root level="DEBUG">

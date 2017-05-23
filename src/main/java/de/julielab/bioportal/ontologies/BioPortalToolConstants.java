@@ -7,5 +7,6 @@ public class BioPortalToolConstants {
 	public static final String PROJECTS_EXT = ".pro.json";
 	public static final String ANALYTICS_EXT = ".ana.json";
 	public static final String CLASSES_EXT = ".cls.jsonlst";
+	public static final String MAPPING_EXT = ".map.json";
 	public static final String DOWNLOAD_FILENAME = "downloadFileName.txt";
 }

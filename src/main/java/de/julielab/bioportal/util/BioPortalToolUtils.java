@@ -144,13 +144,23 @@ public class BioPortalToolUtils {
 			os = new GZIPOutputStream(os);
 		return new BufferedOutputStream(os);
 	}
-	
+
 	public static Reader getReaderFromFile(File file) throws IOException {
 		return new BufferedReader(new InputStreamReader(getInputStreamFromFile(file), "UTF-8"));
 	}
-	
+
 	public static Writer getWriterToFile(File file) throws IOException {
 		return new BufferedWriter(new OutputStreamWriter(getOutputStreamToFile(file), "UTF-8"));
+	}
+
+	public static String readLineFromStdIn() throws IOException {
+		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+		return br.readLine();
+	}
+
+	public static String readLineFromStdInWithMessage(String message) throws IOException {
+		System.out.println(message);
+		return readLineFromStdIn();
 	}
 
 }

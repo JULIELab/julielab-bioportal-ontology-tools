@@ -22,7 +22,7 @@ import de.julielab.bioportal.util.ResourceDownloadException;
 import de.julielab.bioportal.util.ResourceNotFoundException;
 
 public class HttpHandler {
-	
+
 	private static final Logger log = LoggerFactory.getLogger(HttpHandler.class);
 	/**
 	 * The BioPortal API key. Without this key, BioPortal won't serve requests
@@ -39,25 +39,29 @@ public class HttpHandler {
 	public HttpHandler(String apiKey) {
 		this(apiKey, 120000, 3, 60000);
 	}
-	
+
 	/**
 	 * 
-	 * @param apiKey BioPortal API key
-	 * @param timeout Connection timeout in milliseconds
-	 * @param maxRetries Numbers of retries if a connection fails
-	 * @param waittime Time to wait between reconnect retries in milliseconds
+	 * @param apiKey
+	 *            BioPortal API key
+	 * @param timeout
+	 *            Connection timeout in milliseconds
+	 * @param maxRetries
+	 *            Numbers of retries if a connection fails
+	 * @param waittime
+	 *            Time to wait between reconnect retries in milliseconds
 	 */
 	public HttpHandler(String apiKey, int timeout, int maxRetries, int waittime) {
 		this.apiKey = apiKey;
 		this.maxRetries = maxRetries;
 		this.waittime = waittime;
-		RequestConfig config =
-				RequestConfig.custom().setConnectTimeout(timeout).setConnectionRequestTimeout(timeout)
-						.setSocketTimeout(timeout).build();
+		RequestConfig config = RequestConfig.custom().setConnectTimeout(timeout).setConnectionRequestTimeout(timeout)
+				.setSocketTimeout(timeout).build();
 		client = HttpClientBuilder.create().setDefaultRequestConfig(config).build();
 	}
-	
-	public HttpEntity sendGetRequest(HttpGet reusableGet) throws SocketException, SocketTimeoutException, ResourceNotFoundException, ResourceAccessDeniedException, ResourceDownloadException {
+
+	public HttpEntity sendGetRequest(HttpGet reusableGet) throws SocketException, SocketTimeoutException,
+			ResourceNotFoundException, ResourceAccessDeniedException, ResourceDownloadException {
 		HttpEntity entity = null;
 		try {
 			HttpResponse response = client.execute(reusableGet);
@@ -72,12 +76,13 @@ public class HttpHandler {
 				log.error("Error when posting a request to BioPortal Server: {}",
 						null != entity ? EntityUtils.toString(entity) : response.getStatusLine());
 				if (statusCode == 400)
-					throw new ResourceNotFoundException(
-							"HTTP status " + statusCode + ": Bad access error, probably is there no such ontology/mapping submission.");
+					throw new ResourceNotFoundException("HTTP status " + statusCode
+							+ ": Bad access error, probably is there no such ontology/mapping submission.");
 				if (statusCode == 403)
-					throw new ResourceAccessDeniedException("HTTP status " + statusCode +": Access to the requested resource was denied.");
+					throw new ResourceAccessDeniedException(
+							"HTTP status " + statusCode + ": Access to the requested resource was denied.");
 				if (statusCode == 404)
-					throw new ResourceNotFoundException("HTTP status " + statusCode +": Resource not found");
+					throw new ResourceNotFoundException("HTTP status " + statusCode + ": Resource not found");
 				throw new ResourceDownloadException("HTTP error: " + statusCode);
 			}
 		} catch (SocketException e) {
@@ -91,13 +96,14 @@ public class HttpHandler {
 		}
 		return entity;
 	}
-	
-	
-	public HttpEntity sendGetRequest(String address) throws SocketTimeoutException, ResourceNotFoundException, ResourceAccessDeniedException, ResourceDownloadException {
+
+	public HttpEntity sendGetRequest(String address) throws SocketTimeoutException, ResourceNotFoundException,
+			ResourceAccessDeniedException, ResourceDownloadException {
 		return sendGetRequest(URI.create(address));
 	}
-	
-	public HttpEntity sendGetRequest(URI uri) throws SocketTimeoutException, ResourceNotFoundException, ResourceAccessDeniedException, ResourceDownloadException {
+
+	public HttpEntity sendGetRequest(URI uri) throws SocketTimeoutException, ResourceNotFoundException,
+			ResourceAccessDeniedException, ResourceDownloadException {
 		HttpEntity entity = null;
 
 		HttpGet get = new HttpGet(uri);
@@ -112,7 +118,9 @@ public class HttpHandler {
 					log.debug("Sending request.");
 				entity = sendGetRequest(get);
 				log.debug("Response received.");
-			} catch (SocketException e) {
+			} catch (ResourceNotFoundException e) {
+				throw e;
+			} catch (ResourceDownloadException | SocketTimeoutException | SocketException e) {
 				if (retries == maxRetries) {
 					log.error("{}. retry without success; aborting.", maxRetries);
 				} else {
@@ -128,11 +136,12 @@ public class HttpHandler {
 		}
 		return entity;
 	}
-	
-	public static String convertEntityToUTF8String(HttpEntity response) throws IOException, UnsupportedEncodingException {
+
+	public static String convertEntityToUTF8String(HttpEntity response)
+			throws IOException, UnsupportedEncodingException {
 		byte[] responseBytes = EntityUtils.toByteArray(response);
 		String responseString = new String(responseBytes, "UTF-8");
 		return responseString;
 	}
-	
+
 }

@@ -508,4 +508,8 @@ public class OntologyClassNameExtractor {
 		return isObsolete;
 	}
 
+	public void shutDown() {
+		executor.shutdown();
+	}
+
 }
