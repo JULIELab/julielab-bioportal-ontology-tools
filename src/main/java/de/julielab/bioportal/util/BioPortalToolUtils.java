@@ -163,6 +163,14 @@ public class BioPortalToolUtils {
 		return readLineFromStdIn();
 	}
 	
+	public static String readLineFromStdInWithMessage(String message, String defaultResponse) throws IOException {
+		System.out.println(message + "(" + defaultResponse + ")");
+		String input = readLineFromStdIn();
+		if (input.trim().length() == 0)
+			return defaultResponse;
+		return input;
+	}
+	
 	public static boolean readYesNoFromStdInWithMessage(String message) throws IOException {
 		String response = "";
 		while(!response.equals("y") && !response.equals("yes") && !response.equals("n") && !response.equals("no")) {
