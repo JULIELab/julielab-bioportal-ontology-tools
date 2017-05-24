@@ -33,7 +33,7 @@ public class MappingDownloadApplication {
 			apikey = readLineFromStdInWithMessage("Please specify your BioPortal API key:");
 			String[] acronyms = readLineFromStdInWithMessage(
 					"Optional: Specify ontology acronyms to restrict the download to, separated by whitespace:").trim()
-							.split("\\s");
+							.split("\\s+");
 			if (acronyms.length > 0) {
 				ontologiesForDownload = new HashSet<>();
 				for (int i = 0; i < acronyms.length; i++) {
