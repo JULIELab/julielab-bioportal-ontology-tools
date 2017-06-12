@@ -162,7 +162,7 @@ public class BioPortalToolUtils {
 		System.out.println(message);
 		return readLineFromStdIn();
 	}
-	
+
 	public static String readLineFromStdInWithMessage(String message, String defaultResponse) throws IOException {
 		System.out.println(message + "(" + defaultResponse + ")");
 		String input = readLineFromStdIn();
@@ -170,23 +170,25 @@ public class BioPortalToolUtils {
 			return defaultResponse;
 		return input;
 	}
-	
+
 	public static boolean readYesNoFromStdInWithMessage(String message) throws IOException {
 		String response = "";
-		while(!response.equals("y") && !response.equals("yes") && !response.equals("n") && !response.equals("no")) {
+		while (!response.equals("y") && !response.equals("yes") && !response.equals("n") && !response.equals("no")) {
 			response = readLineFromStdInWithMessage(message + " (y/n)");
 			response = response.toLowerCase();
 		}
 		return response.equals("y") || response.equals("yes");
 	}
-	
+
 	public static boolean readYesNoFromStdInWithMessage(String message, boolean defaultResponse) throws IOException {
 		String response = "";
 		String defaultMarker = defaultResponse ? "y" : "n";
-		while(!response.equals("y") && !response.equals("yes") && !response.equals("n") && !response.equals("no") && response.trim().length() > 0) {
-			response = readLineFromStdInWithMessage(message + " (y/n)["+defaultMarker+"]");
+		do {
+			response = readLineFromStdInWithMessage(message + " (y/n)[" + defaultMarker + "]");
 			response = response.toLowerCase();
-		}
+		} while (!response.equals("y") && !response.equals("yes") && !response.equals("n") && !response.equals("no")
+				&& response.trim().length() > 0);
+
 		return response.equals("y") || response.equals("yes") || response.trim().length() == 0;
 	}
 

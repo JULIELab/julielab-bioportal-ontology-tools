@@ -72,6 +72,9 @@ public class MappingDownloader {
 		errors.info("------- Error report for download beginning at " + (new Date())
 				+ " ---------\n", "UTF-8", true);
 		
+		if (!mappingsDir.exists())
+			mappingsDir.mkdirs();
+		
 		List<OntologyMetaData> ontologiesMetaData = ontologyListRetriver.getOntologiesMetaData(null, ontologiesToDownload);
 		removeAlreadyDownloadedButLast(ontologiesMetaData, mappingsDir);
 		removeNotInOntologiesDirectory(ontologiesMetaData, ontosDir);
