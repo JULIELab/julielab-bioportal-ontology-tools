@@ -105,6 +105,8 @@ public class MappingDownloader {
 	}
 	
 	private void removeNotInOntologiesDirectory(List<OntologyMetaData> ontologiesMetaData, File ontosDir) {
+		if (ontosDir == null)
+			return;
 		log.info("Removing ontologies from the mapping download list that are not found in directory {}", ontosDir);
 		File[] ontologyFiles = ontosDir.listFiles(f -> !f.getName().equals(".DS_Store"));
 		// First, collect all the acronyms of ontologies in the given directory
