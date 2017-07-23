@@ -31,7 +31,7 @@ public class OntologyDownloadApplication {
 		Set<String> ontologiesForDownload = new HashSet<>();
 		if (args.length < 3) {
 			System.err.println("Usage: " + OntologyDownloadApplication.class.getSimpleName()
-					+ "<ontologies dir> <ontologies info dir> <BioPortal API Key> [<acronym1>,<acronym2>,...]");
+					+ "<ontologies dir> <ontologies info dir> <BioPortal API Key> [<acronym1> <acronym2> ...]");
 			ontologiesDir = new File(BioPortalToolUtils.readLineFromStdInWithMessage("Please specify the directory to download ontologies to:"));
 			ontologyInfosDir = new File(BioPortalToolUtils.readLineFromStdInWithMessage("Please specify the directory to store ontology meta information to:"));
 			apiKey = BioPortalToolUtils.readLineFromStdInWithMessage("Please specify your BioPortal API key:");

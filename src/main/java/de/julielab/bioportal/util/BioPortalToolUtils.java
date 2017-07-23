@@ -23,10 +23,16 @@ import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 public class BioPortalToolUtils {
+
+	private static final Logger log = LoggerFactory.getLogger(BioPortalToolUtils.class);
+
 	public static String getAcronymFromFileName(String filename) {
 		if (filename.indexOf('.') != -1)
 			return filename.substring(0, filename.indexOf('.'));
@@ -119,11 +125,16 @@ public class BioPortalToolUtils {
 	 *             If there is an error during reading.
 	 */
 	public static InputStream getInputStreamFromFile(File file) throws IOException {
-		InputStream is = new FileInputStream(file);
-		String lcfn = file.getName().toLowerCase();
-		if (lcfn.contains(".gz") || lcfn.contains(".gzip"))
-			is = new GZIPInputStream(is);
-		return new BufferedInputStream(is);
+		try {
+			InputStream is = new FileInputStream(file);
+			String lcfn = file.getName().toLowerCase();
+			if (lcfn.contains(".gz") || lcfn.contains(".gzip"))
+				is = new GZIPInputStream(is);
+			return new BufferedInputStream(is);
+		} catch (Exception | Error e) {
+			log.error("Exception or error occurred while trying to create input stream for file {}", file);
+			throw e;
+		}
 	}
 
 	/**

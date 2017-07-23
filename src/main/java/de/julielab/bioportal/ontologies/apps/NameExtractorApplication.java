@@ -52,7 +52,7 @@ public class NameExtractorApplication {
 		if (args.length < 4)
 			return Collections.emptySet();
 		Set<String> acronyms = new HashSet<>();
-		for (int i = 2; i < args.length; i++) {
+		for (int i = 3; i < args.length; i++) {
 			acronyms.add(args[i]);
 		}
 		return acronyms;

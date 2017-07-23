@@ -26,7 +26,6 @@ import java.util.zip.GZIPOutputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
@@ -217,7 +216,7 @@ public class OntologyDownloader {
 		public void download() throws JsonSyntaxException, IOException, ResourceDownloadException, ParseException {
 			try {
 				if (!metaDataFile.exists())
-					FileUtils.write(metaDataFile, gson.toJson(metaData), "UTF-8");
+					IOUtils.write(gson.toJson(metaData), BioPortalToolUtils.getOutputStreamToFile(metaDataFile), Charset.forName("UTF-8"));
 				else
 					log.info("Meta data file {} already exist and is not overwritten", metaDataFile);
 				String submission = downloadInfoForOntology(

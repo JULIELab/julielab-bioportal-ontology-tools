@@ -233,7 +233,8 @@ public class OntologyClassNameExtractor {
 
 		@Override
 		public Void call() throws Exception {
-			if (BioPortalToolUtils.isSupportedOntologyFile(file) || file.isDirectory()) {
+			// directories are allowed if they contain the downloadFileName.txt file; otherwise it is not an ontology download directory
+			if (BioPortalToolUtils.isSupportedOntologyFile(file) || (file.isDirectory() && file.listFiles((f,name)->name.equals(BioPortalToolConstants.DOWNLOAD_FILENAME)).length == 1)) {
 				try {
 					extractNamesForOntology(file, submissionsDirectory, outputDir, ontologyLoader);
 				} catch (UnparsableOntologyException e) {
