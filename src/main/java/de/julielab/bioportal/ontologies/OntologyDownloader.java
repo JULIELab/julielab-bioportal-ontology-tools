@@ -164,7 +164,7 @@ public class OntologyDownloader {
 			IOException {
 		if (destFile.exists() && destFile.length() > 0) {
 			log.info("The file {} exists and is not empty. It is kept, download of the file is skipped.", destFile);
-			return IOUtils.toString(BioPortalToolUtils.getInputStreamFromFile(destFile));
+			return IOUtils.toString(BioPortalToolUtils.getInputStreamFromFile(destFile), Charset.forName("UTF-8"));
 		}
 		try {
 			log.debug("Fetching {} from BioPortal for {}", infoType, metaData.acronym);
@@ -216,7 +216,9 @@ public class OntologyDownloader {
 		public void download() throws JsonSyntaxException, IOException, ResourceDownloadException, ParseException {
 			try {
 				if (!metaDataFile.exists())
-					IOUtils.write(gson.toJson(metaData), BioPortalToolUtils.getOutputStreamToFile(metaDataFile), Charset.forName("UTF-8"));
+					try (Writer w = BioPortalToolUtils.getWriterToFile(metaDataFile)) {
+						w.write(gson.toJson(metaData));
+					}
 				else
 					log.info("Meta data file {} already exist and is not overwritten", metaDataFile);
 				String submission = downloadInfoForOntology(
@@ -387,7 +389,10 @@ public class OntologyDownloader {
 						Files.move(outputFile.toPath(), ontologyFile.toPath());
 						Files.delete(ontologyDir.toPath());
 					} else {
-						Files.write(Paths.get(ontologyDataDir.getAbsolutePath() + File.separator + ontoInf.acronym + File.separator + BioPortalToolConstants.DOWNLOAD_FILENAME), downloadFileName.getBytes());
+						Files.write(
+								Paths.get(ontologyDataDir.getAbsolutePath() + File.separator + ontoInf.acronym
+										+ File.separator + BioPortalToolConstants.DOWNLOAD_FILENAME),
+								downloadFileName.getBytes());
 					}
 				} else {
 					writeStreamToFile(is, ontologyFile);
@@ -399,7 +404,7 @@ public class OntologyDownloader {
 			// occurred
 			throw new OntologyFileNotAvailableException("Ontology with acronym " + ontoInf.acronym
 					+ " does not yet have a file ready for download (error message: "
-					+ IOUtils.toString(conn.getErrorStream()) + ").");
+					+ IOUtils.toString(conn.getErrorStream(), Charset.forName("UTF-8")) + ").");
 		}
 
 		conn.disconnect();
