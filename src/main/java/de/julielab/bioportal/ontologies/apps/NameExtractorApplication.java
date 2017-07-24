@@ -53,10 +53,10 @@ public class NameExtractorApplication {
 	}
 
 	private static Set<String> getSpecifiedOntologies(String[] args) {
-		if (args.length < 4)
+		if (args.length < 5)
 			return Collections.emptySet();
 		Set<String> acronyms = new HashSet<>();
-		for (int i = 3; i < args.length; i++) {
+		for (int i = 4; i < args.length; i++) {
 			acronyms.add(args[i]);
 		}
 		return acronyms;
