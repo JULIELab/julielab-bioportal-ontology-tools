@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
 
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.slf4j.Logger;
@@ -23,22 +24,25 @@ public class NameExtractorApplication {
 		File ontologiesDir;
 		File ontologyInfosDir;
 		File outputDir;
-		if (args.length < 3) {
+		boolean applyReasoning;
+		if (args.length < 4) {
 			System.err
-					.println("Usage: " + NameExtractorApplication.class.getSimpleName() + " <ontologies dir> <ontologies info dir> <output dir> [<acronym1>,<acronym2>,...]");
+					.println("Usage: " + NameExtractorApplication.class.getSimpleName() + " <ontologies dir> <ontologies info dir> <output dir> <apply reasoning: true/false> [<acronym1>,<acronym2>,...]");
 			ontologiesDir = new File(BioPortalToolUtils.readLineFromStdInWithMessage("Please specify the ontologies directory:"));
 			ontologyInfosDir = new File(BioPortalToolUtils.readLineFromStdInWithMessage("Please specify the ontolgoy info directory:"));
 			outputDir = new File(BioPortalToolUtils.readLineFromStdInWithMessage("Please specify the output directory:"));
+			applyReasoning = Boolean.parseBoolean(BioPortalToolUtils.readLineFromStdInWithMessage("Please specify whether to apply reasoning (true or false):"));
 		} else {
 			ontologiesDir = new File(args[0]);
 			ontologyInfosDir = new File(args[1]);
 			outputDir = new File(args[2]);
+			applyReasoning = Boolean.parseBoolean(args[3]);
 		}
 		log.info(
 				"Extracting ontology names, synonyms and descriptions from downloaded ontologies and storing them into {}.",
 				outputDir);
 		long time = System.currentTimeMillis();
-		OntologyClassNameExtractor nameExtractor = new OntologyClassNameExtractor();
+		OntologyClassNameExtractor nameExtractor = new OntologyClassNameExtractor(Executors.newCachedThreadPool(Executors.defaultThreadFactory()), applyReasoning);
 		int numOntologies = nameExtractor.run(ontologiesDir, ontologyInfosDir, outputDir, getSpecifiedOntologies(args));
 		nameExtractor.shutDown();
 		time = System.currentTimeMillis() - time;
