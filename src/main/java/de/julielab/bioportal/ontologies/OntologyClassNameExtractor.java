@@ -374,8 +374,9 @@ public class OntologyClassNameExtractor {
 	 */
 	private OntologyClassParents determineClassParents(OWLOntology o, OWLClass c, OWLReasoner reasoner) {
 		Stream<OWLClassExpression> superClasses = reasoner != null
-				? reasoner.getSuperClasses(c).entities().map(OWLClassExpression.class::cast)
+				? reasoner.getSuperClasses(c, true).entities().map(OWLClassExpression.class::cast)
 				: EntitySearcher.getSuperClasses(c, o);
+				
 		OntologyClassParents classParents = new OntologyClassParents();
 		for (Iterator<OWLClassExpression> iterator = superClasses.iterator(); iterator.hasNext();) {
 			OWLClassExpression classExpr = iterator.next();
