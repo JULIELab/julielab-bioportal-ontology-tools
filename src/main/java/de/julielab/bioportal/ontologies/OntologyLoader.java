@@ -35,6 +35,9 @@ public class OntologyLoader {
 		config = config.setMissingImportHandlingStrategy(MissingImportHandlingStrategy.SILENT);
 
 		ontologyManager.setOntologyLoaderConfiguration(config);
+		ontologyManager.addMissingImportListener(event -> log.warn(
+				"An exception concerning the ontology import of {} was thrown: {}; Extracted class names will not include classes from that ontology.",
+				event.getImportedOntologyURI(), event.getCreationException().getMessage()));
 	}
 
 	public OWLOntologyManager getOntologyManager() {
@@ -49,7 +52,7 @@ public class OntologyLoader {
 	public File getMainOntologyFile(File directory) throws IOException {
 		if (!directory.isDirectory())
 			throw new IllegalArgumentException(directory.getAbsolutePath() + " is not a directory.");
-		
+
 		File downloadFileNameFile = new File(
 				directory.getAbsolutePath() + File.separator + BioPortalToolConstants.DOWNLOAD_FILENAME);
 		String lcdfn = Files.toString(downloadFileNameFile, Charset.forName("UTF-8")).toLowerCase();
@@ -76,27 +79,6 @@ public class OntologyLoader {
 
 			try {
 				loadOntology(getMainOntologyFile(file));
-
-				// File downloadFileNameFile = new File(
-				// file.getAbsolutePath() + File.separator +
-				// BioPortalToolConstants.DOWNLOAD_FILENAME);
-				// try {
-				// String lcdfn = Files.toString(downloadFileNameFile,
-				// Charset.forName("UTF-8")).toLowerCase();
-				// final String noextension = lcdfn.substring(0,
-				// lcdfn.indexOf('.'));
-				// File[] files = file.listFiles(f ->
-				// f.getName().toLowerCase().startsWith(noextension));
-				// if (files.length == 1)
-				// return loadOntology(files[0]);
-				// else
-				// throw new FileNotFoundException("The main file to load from
-				// directory " + file.getAbsolutePath()
-				// + " could not be identified. There were " + files.length + "
-				// candidates: "
-				// + Stream.of(files).map(f ->
-				// f.getAbsolutePath()).collect(Collectors.joining(", ")));
-
 			} catch (IOException e) {
 				throw new OWLOntologyCreationException(e);
 			} finally {

@@ -29,7 +29,7 @@ public class NameExtractorApplication {
 			System.err
 					.println("Usage: " + NameExtractorApplication.class.getSimpleName() + " <ontologies dir> <ontologies info dir> <output dir> <apply reasoning: true/false> [<acronym1>,<acronym2>,...]");
 			ontologiesDir = new File(BioPortalToolUtils.readLineFromStdInWithMessage("Please specify the ontologies directory:"));
-			ontologyInfosDir = new File(BioPortalToolUtils.readLineFromStdInWithMessage("Please specify the ontolgoy info directory:"));
+			ontologyInfosDir = new File(BioPortalToolUtils.readLineFromStdInWithMessage("Please specify the ontology info directory:"));
 			outputDir = new File(BioPortalToolUtils.readLineFromStdInWithMessage("Please specify the output directory:"));
 			applyReasoning = Boolean.parseBoolean(BioPortalToolUtils.readLineFromStdInWithMessage("Please specify whether to apply reasoning (true or false):"));
 		} else {

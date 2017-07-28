@@ -3,6 +3,7 @@ package de.julielab.bioportal.ontologies;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -47,8 +48,14 @@ public class AnnotationPropertySet {
 	public AnnotationPropertySet(OWLOntologyManager ontologyManager, File submissionFile)
 			throws FileNotFoundException, IOException {
 		Gson gson = BioPortalToolUtils.getGson();
-		String submissionString = IOUtils.toString(BioPortalToolUtils.getInputStreamFromFile(submissionFile));
-		Submission submission = gson.fromJson(submissionString, Submission.class);
+		Submission submission = null;
+		if (submissionFile.exists()) {
+			String submissionString = IOUtils.toString(BioPortalToolUtils.getInputStreamFromFile(submissionFile),
+					Charset.forName("UTF-8"));
+			submission = gson.fromJson(submissionString, Submission.class);
+		} else {
+			log.debug("No submission file {} was found, using default annotation properties.", submissionFile);
+		}
 		setupAnnotationProperties(ontologyManager, submission);
 	}
 
@@ -56,22 +63,26 @@ public class AnnotationPropertySet {
 		OWLDataFactory df = ontologyManager.getOWLDataFactory();
 		// add the properties given in the submission first so they are checked
 		// at first
-		log.trace("Submission {} specifies the following properties:", submission.id);
-		if (submission.prefLabelProperty != null) {
-			prefNameProps.add(df.getOWLAnnotationProperty(IRI.create(submission.prefLabelProperty)));
-			log.trace("Preferred label: {}", submission.prefLabelProperty);
-		}
-		if (submission.synonymProperty != null) {
-			synonymProps.add(df.getOWLAnnotationProperty(IRI.create(submission.synonymProperty)));
-			log.trace("Synonyms: {}", submission.synonymProperty);
-		}
-		if (submission.definitionProperty != null) {
-			definitionProps.add(df.getOWLAnnotationProperty(IRI.create(submission.definitionProperty)));
-			log.trace("Definition: {}", submission.definitionProperty);
-		}
-		if (submission.obsoleteProperty != null) {
-			obsoleteProps.add(df.getOWLAnnotationProperty(IRI.create(submission.obsoleteProperty)));
-			log.trace("Obsolete classes: {}", submission.obsoleteProperty);
+		log.trace("Submission {} specifies the following properties:", (submission != null ? submission.id : null));
+		if (submission == null)
+			log.trace("None.");
+		if (submission != null) {
+			if (submission.prefLabelProperty != null) {
+				prefNameProps.add(df.getOWLAnnotationProperty(IRI.create(submission.prefLabelProperty)));
+				log.trace("Preferred label: {}", submission.prefLabelProperty);
+			}
+			if (submission.synonymProperty != null) {
+				synonymProps.add(df.getOWLAnnotationProperty(IRI.create(submission.synonymProperty)));
+				log.trace("Synonyms: {}", submission.synonymProperty);
+			}
+			if (submission.definitionProperty != null) {
+				definitionProps.add(df.getOWLAnnotationProperty(IRI.create(submission.definitionProperty)));
+				log.trace("Definition: {}", submission.definitionProperty);
+			}
+			if (submission.obsoleteProperty != null) {
+				obsoleteProps.add(df.getOWLAnnotationProperty(IRI.create(submission.obsoleteProperty)));
+				log.trace("Obsolete classes: {}", submission.obsoleteProperty);
+			}
 		}
 		addDefaultAnnotationProperties(ontologyManager);
 	}

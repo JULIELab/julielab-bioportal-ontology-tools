@@ -40,4 +40,8 @@ public class OntologyClass {
 	public String toString() {
 		return gson.toJson(this);
 	}
+
+	public boolean hasParents() {
+		return parents != null && parents.parents != null && !parents.parents.isEmpty();
+	}
 }
