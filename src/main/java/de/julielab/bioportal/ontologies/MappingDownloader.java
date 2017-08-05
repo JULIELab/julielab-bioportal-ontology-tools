@@ -96,7 +96,7 @@ public class MappingDownloader {
 		for (Future<?> future : futures) {
 			try {
 				future.get();
-				log.info("{} of {} ontology mappings successfully downloaded.", i, futures.size());
+				log.info("{} of {} ontology mappings successfully downloaded.", i++, futures.size());
 			} catch (InterruptedException | ExecutionException e) {
 				e.printStackTrace();
 			}
