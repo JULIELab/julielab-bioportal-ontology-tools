@@ -1,5 +1,5 @@
 package de.julielab.bioportal.ontologies.apps;
-
+import static de.julielab.java.utilities.CLIInteractionUtilities.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
@@ -28,10 +28,10 @@ public class NameExtractorApplication {
 		if (args.length < 4) {
 			System.err
 					.println("Usage: " + NameExtractorApplication.class.getSimpleName() + " <ontologies dir> <ontologies info dir> <output dir> <apply reasoning: true/false> [<acronym1>,<acronym2>,...]");
-			ontologiesDir = new File(BioPortalToolUtils.readLineFromStdInWithMessage("Please specify the ontologies directory:"));
-			ontologyInfosDir = new File(BioPortalToolUtils.readLineFromStdInWithMessage("Please specify the ontology info directory:"));
-			outputDir = new File(BioPortalToolUtils.readLineFromStdInWithMessage("Please specify the output directory:"));
-			applyReasoning = Boolean.parseBoolean(BioPortalToolUtils.readLineFromStdInWithMessage("Please specify whether to apply reasoning (true or false):"));
+			ontologiesDir = new File(readLineFromStdInWithMessage("Please specify the ontologies directory:"));
+			ontologyInfosDir = new File(readLineFromStdInWithMessage("Please specify the ontology info directory:"));
+			outputDir = new File(readLineFromStdInWithMessage("Please specify the output directory:"));
+			applyReasoning = Boolean.parseBoolean(readLineFromStdInWithMessage("Please specify whether to apply reasoning (true or false):"));
 		} else {
 			ontologiesDir = new File(args[0]);
 			ontologyInfosDir = new File(args[1]);

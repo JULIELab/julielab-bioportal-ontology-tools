@@ -1,6 +1,6 @@
 package de.julielab.bioportal.ontologies.apps;
 
-import static de.julielab.bioportal.util.BioPortalToolUtils.readLineFromStdInWithMessage;
+import static de.julielab.java.utilities.CLIInteractionUtilities.readLineFromStdInWithMessage;
 
 import java.io.File;
 import java.io.IOException;
@@ -17,7 +17,6 @@ import org.slf4j.LoggerFactory;
 import de.julielab.bioportal.ontologies.DownloadStats;
 import de.julielab.bioportal.ontologies.OntologyDownloader;
 import de.julielab.bioportal.util.BioPortalOntologyToolsException;
-import de.julielab.bioportal.util.BioPortalToolUtils;
 
 public class OntologyDownloadApplication {
 
@@ -32,9 +31,9 @@ public class OntologyDownloadApplication {
 		if (args.length < 3) {
 			System.err.println("Usage: " + OntologyDownloadApplication.class.getSimpleName()
 					+ "<ontologies dir> <ontologies info dir> <BioPortal API Key> [<acronym1> <acronym2> ...]");
-			ontologiesDir = new File(BioPortalToolUtils.readLineFromStdInWithMessage("Please specify the directory to download ontologies to:"));
-			ontologyInfosDir = new File(BioPortalToolUtils.readLineFromStdInWithMessage("Please specify the directory to store ontology meta information to:"));
-			apiKey = BioPortalToolUtils.readLineFromStdInWithMessage("Please specify your BioPortal API key:");
+			ontologiesDir = new File(readLineFromStdInWithMessage("Please specify the directory to download ontologies to:"));
+			ontologyInfosDir = new File(readLineFromStdInWithMessage("Please specify the directory to store ontology meta information to:"));
+			apiKey = readLineFromStdInWithMessage("Please specify your BioPortal API key:");
 			String[] acronyms = readLineFromStdInWithMessage("Optional: Specify ontology acronyms to restrict the download to, separated by whitespace:").split("\\s+");
 			if (acronyms.length > 0) {
 				ontologiesForDownload = new HashSet<>();

@@ -41,6 +41,7 @@ import de.julielab.bioportal.ontologies.data.OntologyClass;
 import de.julielab.bioportal.ontologies.data.OntologyClassParents;
 import de.julielab.bioportal.ontologies.data.OntologyClassSynonyms;
 import de.julielab.bioportal.util.BioPortalToolUtils;
+import de.julielab.java.utilities.FileUtilities;
 
 /**
  * The error "[Fatal Error] :1:1: Content is not allowed in prolog." for OBO
@@ -330,7 +331,7 @@ public class OntologyClassNameExtractor {
 		OWLReasoner reasoner = reasonerFactory != null ? reasonerFactory.createReasoner(o) : null;
 
 		log.debug("Writing extracted class names for ontology {} to {}", acronym, classesFile);
-		try (OutputStream os = BioPortalToolUtils.getOutputStreamToFile(classesFile)) {
+		try (OutputStream os = FileUtilities.getOutputStreamToFile(classesFile)) {
 			Stream<OWLClass> classesInSignature = o.classesInSignature(Imports.INCLUDED);
 			for (Iterator<OWLClass> iterator = classesInSignature.iterator(); iterator.hasNext();) {
 				OWLClass c = iterator.next();

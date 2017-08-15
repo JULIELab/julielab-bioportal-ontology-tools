@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.io.Files;
 
-import de.julielab.bioportal.util.BioPortalToolUtils;
+import de.julielab.java.utilities.FileUtilities;
 
 public class OntologyLoader {
 
@@ -90,7 +90,7 @@ public class OntologyLoader {
 		OWLOntology o;
 		try {
 			log.debug("Loading ontology file {}", file);
-			o = loadOntology(BioPortalToolUtils.getInputStreamFromFile(file));
+			o = loadOntology(FileUtilities.getInputStreamFromFile(file));
 		} catch (IOException e) {
 			throw new OWLOntologyCreationException(e);
 		}

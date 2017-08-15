@@ -48,6 +48,7 @@ import de.julielab.bioportal.util.OntologyFileNotAvailableException;
 import de.julielab.bioportal.util.ResourceAccessDeniedException;
 import de.julielab.bioportal.util.ResourceDownloadException;
 import de.julielab.bioportal.util.ResourceNotFoundException;
+import de.julielab.java.utilities.FileUtilities;
 
 public class OntologyDownloader {
 
@@ -164,13 +165,13 @@ public class OntologyDownloader {
 			IOException {
 		if (destFile.exists() && destFile.length() > 0) {
 			log.info("The file {} exists and is not empty. It is kept, download of the file is skipped.", destFile);
-			return IOUtils.toString(BioPortalToolUtils.getInputStreamFromFile(destFile), Charset.forName("UTF-8"));
+			return IOUtils.toString(FileUtilities.getInputStreamFromFile(destFile), Charset.forName("UTF-8"));
 		}
 		try {
 			log.debug("Fetching {} from BioPortal for {}", infoType, metaData.acronym);
 			HttpEntity propertiesResponse = httpHandler.sendGetRequest(address);
 			String infoString = EntityUtils.toString(propertiesResponse);
-			try (Writer w = BioPortalToolUtils.getWriterToFile(destFile)) {
+			try (Writer w = FileUtilities.getWriterToFile(destFile)) {
 				w.write(infoString);
 			}
 			return infoString;
@@ -216,7 +217,7 @@ public class OntologyDownloader {
 		public void download() throws JsonSyntaxException, IOException, ResourceDownloadException, ParseException {
 			try {
 				if (!metaDataFile.exists())
-					try (Writer w = BioPortalToolUtils.getWriterToFile(metaDataFile)) {
+					try (Writer w = FileUtilities.getWriterToFile(metaDataFile)) {
 						w.write(gson.toJson(metaData));
 					}
 				else

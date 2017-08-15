@@ -1,6 +1,6 @@
 package de.julielab.bioportal.ontologies.apps;
 
-import static de.julielab.bioportal.util.BioPortalToolUtils.readLineFromStdInWithMessage;
+import static de.julielab.java.utilities.CLIInteractionUtilities.*;
 
 import java.io.File;
 import java.io.IOException;

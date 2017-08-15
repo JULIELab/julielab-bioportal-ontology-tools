@@ -32,6 +32,7 @@ import de.julielab.bioportal.ontologies.data.OntologyMetaData;
 import de.julielab.bioportal.util.BioPortalOntologyToolsException;
 import de.julielab.bioportal.util.BioPortalToolUtils;
 import de.julielab.bioportal.util.ResourceNotFoundException;
+import de.julielab.java.utilities.FileUtilities;
 
 public class MappingDownloader {
 
@@ -162,7 +163,7 @@ public class MappingDownloader {
 			log.info("Mapping file {} already exists and is not empty. Not downloading again mappings for ontology {}", mappingsFile, ontologyMetaData.acronym);
 			return;
 		}
-		try (OutputStream os = BioPortalToolUtils.getOutputStreamToFile(mappingsFile)) {
+		try (OutputStream os = FileUtilities.getOutputStreamToFile(mappingsFile)) {
 
 			log.info("Mappings of ontology {} are being downloaded (API URL: {}).", ontologyMetaData.bioportalPurl(),
 					ontologyMetaData.apiUrl());

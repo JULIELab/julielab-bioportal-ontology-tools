@@ -19,6 +19,7 @@ import com.google.gson.Gson;
 
 import de.julielab.bioportal.ontologies.data.Submission;
 import de.julielab.bioportal.util.BioPortalToolUtils;
+import de.julielab.java.utilities.FileUtilities;
 
 /**
  * This class defines the relevant annotation properties as given on the
@@ -50,7 +51,7 @@ public class AnnotationPropertySet {
 		Gson gson = BioPortalToolUtils.getGson();
 		Submission submission = null;
 		if (submissionFile.exists()) {
-			String submissionString = IOUtils.toString(BioPortalToolUtils.getInputStreamFromFile(submissionFile),
+			String submissionString = IOUtils.toString(FileUtilities.getInputStreamFromFile(submissionFile),
 					Charset.forName("UTF-8"));
 			submission = gson.fromJson(submissionString, Submission.class);
 		} else {
