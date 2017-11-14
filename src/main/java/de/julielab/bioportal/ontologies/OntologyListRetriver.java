@@ -22,7 +22,6 @@ import org.slf4j.LoggerFactory;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
-import de.julielab.bioportal.ontologies.HttpHandler;
 import de.julielab.bioportal.ontologies.data.OntologyGroup;
 import de.julielab.bioportal.ontologies.data.OntologyMetaData;
 import de.julielab.bioportal.ontologies.data.OntologyMetric;
@@ -50,10 +49,12 @@ public class OntologyListRetriver {
 																					// blocks
 		}.getType();
 
+		log.info("Requesting ontology list from BioPortal");
 		HttpEntity response = httpHandler
 				.sendGetRequest("http://data.bioontology.org/ontologies?include=" + metaDataInclude);
 		String responseString = EntityUtils.toString(response);
 		List<OntologyMetaData> ontologiesMetaData = gson.fromJson(responseString, fromJsonConversionListType);
+		log.info("Retrieved meta data of {} ontologies", ontologiesMetaData.size());
 
 		// Filter for explicitly requested ontologies.
 		for (Iterator<OntologyMetaData> iterator = ontologiesMetaData.iterator(); iterator.hasNext();) {
@@ -67,13 +68,11 @@ public class OntologyListRetriver {
 		// Add ontology metrics: How many classes? Maximum number of children?
 		// How many classes without a description?
 		// etc.
-		// TODO should be un-commented at some time; it was only commented
-		// because BioPortal had an internal server error with the metrics...
-		// Map<String, OntologyMetric> ontologyMetrics = getOntologyMetrics();
-		// for (OntologyMetaData metaData : effectiveOntologiesMetaData) {
-		// OntologyMetric metric = ontologyMetrics.get(metaData.id);
-		// metaData.ontologyMetric = metric;
-		// }
+		Map<String, OntologyMetric> ontologyMetrics = getOntologyMetrics();
+		for (OntologyMetaData metaData : effectiveOntologiesMetaData) {
+			OntologyMetric metric = ontologyMetrics.get(metaData.id);
+			metaData.ontologyMetric = metric;
+		}
 
 		// Add the group ontologies belong to, if any. For example, some
 		// ontologies are from OBO, other from the UMLS

@@ -1,5 +1,5 @@
 <assembly>
-	<id>complete-process-assembly</id>
+	<id>cli</id>
 	<formats>
 		<format>jar</format>
 	</formats>

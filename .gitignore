@@ -8,3 +8,5 @@
 /ontologyids.log
 /unparsable.log
 .DS_Store
+/ontology-download/
+/MAPPING_DOWNLOAD_ERRORS.log

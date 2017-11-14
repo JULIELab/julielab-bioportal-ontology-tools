@@ -26,9 +26,9 @@ public class OntologyClass {
 	@SerializedName("@id")
 	public String id;
 	public String prefLabel;
-	public OntologyClassSynonyms synonym;
+	public OntologyClassSynonyms synonym = OntologyClassSynonyms.EMPTY_SYNONYMS;
 	public List<String> definition;
-	public OntologyClassParents parents;
+	public OntologyClassParents parents = OntologyClassParents.EMPTY_PARENTS;
 	public Boolean obsolete;
 	public String notation;
 	public List<String> semanticType;
@@ -39,5 +39,9 @@ public class OntologyClass {
 
 	public String toString() {
 		return gson.toJson(this);
+	}
+
+	public boolean hasParents() {
+		return parents != null && parents.parents != null && !parents.parents.isEmpty();
 	}
 }
