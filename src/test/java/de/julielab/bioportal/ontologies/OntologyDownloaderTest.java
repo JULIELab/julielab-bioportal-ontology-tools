@@ -15,6 +15,7 @@ import org.junit.Test;
 import com.google.common.collect.Sets;
 
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 
 import de.julielab.bioportal.ontologies.OntologyDownloader;
@@ -64,7 +65,8 @@ public class OntologyDownloaderTest {
 		
 		//Mock method to be called
 		HttpHandler mock = mock(HttpHandler.class);
-		when(mock.sendGetRequest("http://foo")).thenReturn(null);
+//		when(mock.sendGetRequest("http://foo")).thenReturn(null);
+		when(mock.sendGetRequest("http://foo")).thenThrow(new ResourceDownloadException());
 
 		//Insert HttpHandler mock into OntologyDownloader via reflection
 		OntologyDownloader downloader = new OntologyDownloader("API key");
@@ -74,6 +76,15 @@ public class OntologyDownloaderTest {
 		handler.set(downloader, mock);
 		
 		//Call method
-		HttpEntity entity = (HttpEntity) method.invoke(downloader, "http://foo", dummyFile, metadata, "Dummy");
+		try {
+			HttpEntity entity = (HttpEntity) method.invoke(downloader, "http://foo", dummyFile, metadata, "Dummy");
+		} catch (InvocationTargetException e) {
+			String[] cause = e.getCause().toString().split("\\.");
+			if (cause[cause.length-1].equals("ResourceDownloadException")) {
+				throw new ResourceDownloadException();
+			} else {
+				throw e;
+			}
+		}
 	}
 }
