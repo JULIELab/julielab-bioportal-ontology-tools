@@ -37,7 +37,7 @@ public class HttpHandler {
 	private int waittime;
 
 	public HttpHandler(String apiKey) {
-		this(apiKey, 120000, 3, 60000);
+		this(apiKey, 120000, 3, 1800000);
 	}
 
 	/**
