@@ -2,7 +2,7 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>julielab-bioportal-ontology-tools</artifactId>
-	<version>1.0.1</version>
+	<version>1.0.2</version>
 	<name>BioPortal Ontology Tools</name>
 	<description>This project contains some utilities to process ontologies and related data as retrieved from BioPortal. The tools include the download of ontologies from BioPortal, download of mappings from BioPortal and the extraction of names, synonyms, descriptions and superclasses of ontology concepts from downloaded ontologies.</description>
 	<repositories>
