@@ -123,6 +123,7 @@ public class HttpHandler {
 			} catch (ResourceDownloadException | SocketTimeoutException | SocketException e) {
 				if (retries == maxRetries) {
 					log.error("{}. retry without success; aborting.", maxRetries);
+					throw new ResourceDownloadException(e);
 				} else {
 					log.error("SocketException ({}) occurred.", e.getMessage());
 					log.info("Connection is reset and request tried again.");
