@@ -102,7 +102,7 @@ public class HttpHandler {
 		return sendGetRequest(URI.create(address));
 	}
 
-	public HttpEntity sendGetRequest(URI uri) throws SocketTimeoutException, ResourceNotFoundException,
+	public HttpEntity sendGetRequest(URI uri) throws ResourceNotFoundException,
 			ResourceAccessDeniedException, ResourceDownloadException {
 		HttpEntity entity = null;
 
