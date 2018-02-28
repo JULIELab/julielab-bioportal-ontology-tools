@@ -68,7 +68,7 @@ public class MappingDownloader {
 		executorService = Executors.newFixedThreadPool(6);
 	}
 
-	public void downloadOntologyMappings(File mappingsDir, File ontosDir, Set<String> ontologiesToDownload) throws ParseException,
+	public void downloadOntologyMappings(File mappingsDir, File ontosDir, Set<String> ontologiesToDownload) throws 
 			IOException, BioPortalOntologyToolsException {
 		errors.info("------- Error report for download beginning at " + (new Date())
 				+ " ---------\n", "UTF-8", true);
@@ -150,7 +150,7 @@ public class MappingDownloader {
 		
 	}
 
-	private void storeOntologyMappings(OntologyMetaData ontologyMetaData, File ontosDir) throws ParseException,
+	private void storeOntologyMappings(OntologyMetaData ontologyMetaData, File ontosDir) throws 
 			IOException, ResourceNotFoundException {
 		String includedAttributes = "pagesize=500&no_context=true&no_links=true";
 		String mappingsUrl = ontologyMetaData.apiUrl() + "/mappings?" + includedAttributes;
@@ -255,14 +255,14 @@ public class MappingDownloader {
 			return;
 		}
 
-		HashSet<String> ontologyNamesToRemoveFromDownloadList = new HashSet<String>(downloadedOntologies.length);
+		HashSet<String> ontologyNamesToRemoveFromDownloadList = new HashSet<>(downloadedOntologies.length);
 		for (File f : downloadedOntologies) {
 			String filename = f.getName();
 			String ontoAcronym = filename.substring(0, filename.length() - (BioPortalToolConstants.MAPPING_EXT + ".gz").length());
 			ontologyNamesToRemoveFromDownloadList.add(ontoAcronym);
 		}
 
-		List<String> removedOntologies = new ArrayList<String>();
+		List<String> removedOntologies = new ArrayList<>();
 		for (Iterator<OntologyMetaData> it = ontologiesMetaData.iterator(); it.hasNext();) {
 			OntologyMetaData meta = it.next();
 			if (ontologyNamesToRemoveFromDownloadList.contains(meta.acronym)) {
