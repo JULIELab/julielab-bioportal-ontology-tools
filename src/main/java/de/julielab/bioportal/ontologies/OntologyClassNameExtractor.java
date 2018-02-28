@@ -164,7 +164,7 @@ public class OntologyClassNameExtractor {
 	 *             If the thread execution files for a worker thread.
 	 */
 	public int run(File input, File submissionsDirectory, File outputDir, Set<String> ontologiesToExtract)
-			throws IOException, OWLOntologyCreationException, InterruptedException, ExecutionException {
+			throws InterruptedException, ExecutionException {
 		if (!outputDir.exists())
 			outputDir.mkdirs();
 
