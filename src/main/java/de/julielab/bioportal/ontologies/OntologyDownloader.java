@@ -138,8 +138,7 @@ public class OntologyDownloader {
 				ontologiesWithDownloadIssues.size());
 		Iterator<Pair<Future<OntologyMetaData>, DownloadWorker>> futureIt = ontologiesWithDownloadIssues.iterator();
 		while (futureIt.hasNext()) {
-			Pair<Future<OntologyMetaData>, DownloadWorker> futurePair = (Pair<Future<OntologyMetaData>, DownloadWorker>) futureIt
-					.next();
+			Pair<Future<OntologyMetaData>, DownloadWorker> futurePair = futureIt.next();
 			Future<OntologyMetaData> future = futurePair.getLeft();
 			DownloadWorker worker = futurePair.getRight();
 			log.info("Waiting for ontology {}", worker.getOntologyMetaData().acronym);
