@@ -141,8 +141,7 @@ public class HttpHandler {
 	public static String convertEntityToUTF8String(HttpEntity response)
 			throws IOException {
 		byte[] responseBytes = EntityUtils.toByteArray(response);
-		String responseString = new String(responseBytes, "UTF-8");
-		return responseString;
+		return new String(responseBytes, "UTF-8");
 	}
 
 }
