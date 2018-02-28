@@ -47,7 +47,7 @@ public class AnnotationPropertySet {
 	}
 
 	public AnnotationPropertySet(OWLOntologyManager ontologyManager, File submissionFile)
-			throws FileNotFoundException, IOException {
+			throws IOException {
 		Gson gson = BioPortalToolUtils.getGson();
 		Submission submission = null;
 		if (submissionFile.exists()) {
