@@ -45,8 +45,7 @@ public class OntologyLoader {
 	}
 
 	public OWLOntology loadOntology(InputStream is) throws OWLOntologyCreationException {
-		OWLOntology o = ontologyManager.loadOntologyFromOntologyDocument(is);
-		return o;
+		return ontologyManager.loadOntologyFromOntologyDocument(is);
 	}
 
 	public File getMainOntologyFile(File directory) throws IOException {
