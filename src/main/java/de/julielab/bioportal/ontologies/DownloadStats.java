@@ -124,7 +124,7 @@ public class DownloadStats {
 	public void removeOntologyWithDownloadError(String acronym) {
 		Iterator<Pair<String, String>> iterator = ontologiesWithDownloadError.iterator();
 		while (iterator.hasNext()) {
-			Pair<java.lang.String, java.lang.String> pair = (Pair<java.lang.String, java.lang.String>) iterator.next();
+			Pair<java.lang.String, java.lang.String> pair = iterator.next();
 			if (pair.getLeft().equals(acronym))
 				iterator.remove();
 		}
