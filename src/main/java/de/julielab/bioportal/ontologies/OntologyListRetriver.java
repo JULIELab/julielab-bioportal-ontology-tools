@@ -14,7 +14,6 @@ import java.util.zip.GZIPOutputStream;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
-import org.apache.http.ParseException;
 import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,8 +39,8 @@ public class OntologyListRetriver {
 	}
 
 	public List<OntologyMetaData> getOntologiesMetaData(File outputFile, Set<String> ontologiesToDownload)
-			throws ParseException, IOException, BioPortalOntologyToolsException {
-		List<OntologyMetaData> effectiveOntologiesMetaData = new ArrayList<OntologyMetaData>();
+			throws IOException, BioPortalOntologyToolsException {
+		List<OntologyMetaData> effectiveOntologiesMetaData = new ArrayList<>();
 		Type fromJsonConversionListType = new TypeToken<List<OntologyMetaData>>() {// against
 																					// warning
 																					// before
@@ -59,7 +58,7 @@ public class OntologyListRetriver {
 		// Filter for explicitly requested ontologies.
 		for (Iterator<OntologyMetaData> iterator = ontologiesMetaData.iterator(); iterator.hasNext();) {
 			OntologyMetaData ontologyMetaData = iterator.next();
-			if (null != ontologiesToDownload && ontologiesToDownload.size() > 0
+			if (null != ontologiesToDownload && !ontologiesToDownload.isEmpty()
 					&& !ontologiesToDownload.contains(ontologyMetaData.acronym))
 				continue;
 			effectiveOntologiesMetaData.add(ontologyMetaData);
