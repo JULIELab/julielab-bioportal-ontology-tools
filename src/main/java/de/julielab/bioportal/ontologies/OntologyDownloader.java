@@ -101,7 +101,7 @@ public class OntologyDownloader {
 		}
 
 		log.info("Downloading BioPortal ontologies to {}. {}.", ontologyDataDir,
-				ontologiesToDownload.size() == 0 ? "No restrictions on downloaded ontologies imposed"
+				ontologiesToDownload.isEmpty() ? "No restrictions on downloaded ontologies imposed"
 						: "Ontology download is restricted to the ontologies with the following acronyms: "
 								+ StringUtils.join(ontologiesToDownload, ", "));
 		List<OntologyMetaData> ontologiesMetaData = ontologyListRetriver.getOntologiesMetaData(
