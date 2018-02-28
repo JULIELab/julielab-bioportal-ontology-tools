@@ -213,7 +213,7 @@ public class OntologyDownloader {
 			return metaData;
 		}
 
-		public void download() throws JsonSyntaxException, IOException, ResourceDownloadException, ParseException {
+		public void download() throws IOException, ResourceDownloadException {
 			try {
 				if (!metaDataFile.exists())
 					try (Writer w = FileUtilities.getWriterToFile(metaDataFile)) {
