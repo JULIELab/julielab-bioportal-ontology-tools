@@ -8,10 +8,14 @@ import java.util.stream.IntStream;
 
 import org.apache.http.ParseException;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import de.julielab.bioportal.util.BioPortalOntologyToolsException;
 
 public class BioPortalTools {
+	
+	private static Logger log = LoggerFactory.getLogger(BioPortalTools.class);
 
 	public static void main(String[] args)  {
 		String task = args.length > 0 ? args[0] : null;
@@ -43,8 +47,7 @@ public class BioPortalTools {
 						System.exit(0);
 					}
 				} catch (IOException e) {
-					System.err.println("Reading input from standard input failed. Stack trace follows.");
-					e.printStackTrace();
+					log.error("Reading input from standard input failed. Stack trace follows.", e);
 				}
 			}
 		}
@@ -66,8 +69,7 @@ public class BioPortalTools {
 			}
 		} catch (ParseException | OWLOntologyCreationException | IOException | BioPortalOntologyToolsException
 				| InterruptedException | ExecutionException e) {
-			System.err.println("Executing task " + task + " failed. Exception stacktrace follows.");
-			e.printStackTrace();
+			log.error("Executing task " + task + " failed. Exception stacktrace follows.", e);
 		}
 	}
 
