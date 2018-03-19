@@ -456,7 +456,7 @@ public class OntologyClassNameExtractor {
 	/**
 	 * <p>
 	 * Returns the first property value that is not null or blank. If no
-	 * property is set or has a non-null value, the fragmnet of the class IRI is
+	 * property is set or has a non-null value, the fragment of the class IRI is
 	 * returned.
 	 * </p>
 	 * <p>
@@ -481,10 +481,14 @@ public class OntologyClassNameExtractor {
 				String preferredName;
 				OWLAnnotation owlAnnotation = iterator.next();
 				OWLAnnotationValue value = owlAnnotation.getValue();
-				if (value instanceof OWLLiteral)
+				if (value instanceof OWLLiteral) {
 					preferredName = ((OWLLiteral) value).getLiteral();
-				else
+					if (preferredName.isEmpty()) {
+						continue;
+					}
+				} else {
 					preferredName = value.toString();
+				}
 				return preferredName;
 			}
 		}
