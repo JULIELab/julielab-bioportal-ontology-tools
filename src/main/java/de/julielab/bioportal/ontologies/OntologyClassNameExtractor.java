@@ -492,9 +492,9 @@ public class OntologyClassNameExtractor {
 				return preferredName;
 			}
 		}
-		// If we came here, we did not find any preferred name. Use the URI
-		// fragment.
-		return c.getIRI().getRemainder().orElse(null);
+		// If we came here, we did not find any preferred name. Use the IRI
+		// fragment. If there is no fragment, take the whole IRI.
+		return c.getIRI().getRemainder().orElse(c.getIRI().getIRIString());
 	}
 
 	private boolean determineObsolete(OWLOntology o, OWLClass c, AnnotationPropertySet properties) {
