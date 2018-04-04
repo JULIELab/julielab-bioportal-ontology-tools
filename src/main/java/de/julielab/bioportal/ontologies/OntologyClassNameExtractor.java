@@ -335,13 +335,12 @@ public class OntologyClassNameExtractor {
 			Stream<OWLClass> classesInSignature = o.classesInSignature(Imports.INCLUDED);
 			for (Iterator<OWLClass> iterator = classesInSignature.iterator(); iterator.hasNext();) {
 				OWLClass c = iterator.next();
-				System.out.println(c.getIRI());
 
 				if (determineObsolete(o, c, properties)) {
 					log.trace("Excluding obsolete class {}", c.getIRI());
 					continue;
 				}
-
+				
 				String preferredName = determinePreferredName(o, c, properties);
 				OntologyClassSynonyms synonyms = determineSynonyms(o, c, properties);
 				String definition = determineDefinition(o, c, properties);
