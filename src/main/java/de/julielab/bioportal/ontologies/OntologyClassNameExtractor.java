@@ -348,7 +348,7 @@ public class OntologyClassNameExtractor {
 					ontologyFileOrDirectory);
 			o = ontologyLoader.loadOntology(ontologyFileOrDirectory);
 			log.trace("Loading done for {}", ontologyFileOrDirectory);
-		} catch (Error e) {
+		} catch (OWLOntologyCreationException e) {
 			log.error("Error while loading ontology {}.", acronym);
 			throw e;
 		}
