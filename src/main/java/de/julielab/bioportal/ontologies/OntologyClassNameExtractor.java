@@ -61,13 +61,14 @@ public class OntologyClassNameExtractor {
 
 	private ExecutorService executor;
 	private OWLReasonerFactory reasonerFactory;
+	private boolean filterDeprecated;
 
 	/**
 	 * Constructs an <tt>OntologyClassNameExtractor</tt> with a fixed threadpool
 	 * of size 4 and no reasoning.
 	 */
 	public OntologyClassNameExtractor() {
-		this(Executors.newFixedThreadPool(4), false);
+		this(Executors.newFixedThreadPool(4), false, false);
 	}
 
 	/**
@@ -87,11 +88,35 @@ public class OntologyClassNameExtractor {
 	 *            application since reasoning takes substantial time and space.
 	 */
 	public OntologyClassNameExtractor(ExecutorService executor, boolean applyReasoning) {
+		this(executor, applyReasoning, false);
+	}
+
+	/**
+	 * Constructs an <tt>OntologyClassNameExtractor</tt> with he given
+	 * {@link ExecutorService} for multithreading and prepares a HermiT
+	 * {@link OWLReasonerFactory} if <tt>applyReasoning</tt> is set to
+	 * <tt>true</tt>.
+	 * 
+	 * @param executor
+	 *            An <tt>ExecutorService</tt> for parallel name extraction in
+	 *            case of multiple input ontologies.
+	 * @param applyReasoning
+	 *            If set to <tt>true</tt>, a reasoner will be used to determine
+	 *            super- and subclass relationships. This is employed to find
+	 *            the parent concepts of ontology classes. Should be switched
+	 *            off if the parent information is not required by the
+	 *            application since reasoning takes substantial time and space.
+	 * @param filterDeprecated
+	 *            Should classes marked deprecated be removed?
+	 */
+	public OntologyClassNameExtractor(ExecutorService executor, boolean applyReasoning,
+			boolean filterDeprecated) {
 		this.gson = BioPortalToolUtils.getGson();
 		this.executor = executor;
-		if (applyReasoning)
+		if (applyReasoning) {
 			reasonerFactory = new org.semanticweb.HermiT.ReasonerFactory();
-
+		}
+		this.filterDeprecated = filterDeprecated;
 	}
 
 	/**
@@ -336,7 +361,7 @@ public class OntologyClassNameExtractor {
 			for (Iterator<OWLClass> iterator = classesInSignature.iterator(); iterator.hasNext();) {
 				OWLClass c = iterator.next();
 
-				if (determineObsolete(o, c, properties)) {
+				if (determineObsolete(o, c, properties) && filterDeprecated) {
 					log.trace("Excluding obsolete class {}", c.getIRI());
 					continue;
 				}
