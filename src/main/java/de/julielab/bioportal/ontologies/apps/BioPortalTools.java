@@ -7,7 +7,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.IntStream;
 
 import org.apache.http.ParseException;
-import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,7 +66,7 @@ public class BioPortalTools {
 				MappingDownloadApplication.main(argsForApp);
 				break;
 			}
-		} catch (ParseException | OWLOntologyCreationException | IOException | BioPortalOntologyToolsException
+		} catch (ParseException | IOException | BioPortalOntologyToolsException
 				| InterruptedException | ExecutionException e) {
 			log.error("Executing task " + task + " failed. Exception stacktrace follows.", e);
 		}
