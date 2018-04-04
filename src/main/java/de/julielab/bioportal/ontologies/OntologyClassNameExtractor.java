@@ -146,7 +146,7 @@ public class OntologyClassNameExtractor {
 	 *             If the thread execution files for a worker thread.
 	 */
 	public int run(File input, File submissionsDirectory, File output)
-			throws OWLOntologyCreationException, IOException, InterruptedException, ExecutionException {
+			throws InterruptedException, ExecutionException {
 		return run(input, submissionsDirectory, output, null);
 	}
 
