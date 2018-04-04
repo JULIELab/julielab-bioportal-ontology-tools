@@ -8,19 +8,17 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 
-import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.julielab.bioportal.ontologies.OntologyClassNameExtractor;
-import de.julielab.bioportal.util.BioPortalToolUtils;
 
 public class NameExtractorApplication {
 
 	private static final Logger log = LoggerFactory.getLogger(NameExtractorApplication.class);
 
 	public static void main(String[] args)
-			throws OWLOntologyCreationException, IOException, InterruptedException, ExecutionException {
+			throws IOException, InterruptedException, ExecutionException {
 		File ontologiesDir;
 		File ontologyInfosDir;
 		File outputDir;
