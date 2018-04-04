@@ -49,9 +49,7 @@ public class NameExtractorApplication {
 		int numOntologies = nameExtractor.run(ontologiesDir, ontologyInfosDir, outputDir, getSpecifiedOntologies(args));
 		nameExtractor.shutDown();
 		time = System.currentTimeMillis() - time;
-		log.info("Extracting names from {} ontologies took {}ms ({}s)",
-				new Object[] { numOntologies, time, time / 1000 });
-
+		log.info("Extracting names from {} ontologies took {}ms ({}s)", numOntologies, time, time / 1000);
 		log.info("Process complete.");
 	}
 
