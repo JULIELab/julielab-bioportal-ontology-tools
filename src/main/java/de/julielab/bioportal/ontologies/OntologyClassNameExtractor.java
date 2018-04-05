@@ -367,8 +367,9 @@ public class OntologyClassNameExtractor {
 			Stream<OWLClass> classesInSignature = o.classesInSignature(Imports.INCLUDED);
 			for (Iterator<OWLClass> iterator = classesInSignature.iterator(); iterator.hasNext();) {
 				OWLClass c = iterator.next();
+				boolean obsolete = determineObsolete(o, c, properties);
 
-				if (determineObsolete(o, c, properties) && filterDeprecated) {
+				if (obsolete && filterDeprecated) {
 					log.trace("Excluding obsolete class {}", c.getIRI());
 					continue;
 				}
@@ -381,6 +382,9 @@ public class OntologyClassNameExtractor {
 				OntologyClass ontologyClass = new OntologyClass();
 				ontologyClass.id = c.getIRI().toString();
 				ontologyClass.prefLabel = preferredName;
+				if (obsolete) {
+					ontologyClass.obsolete = true;
+				}
 				if (synonyms.synonyms != null && !synonyms.synonyms.isEmpty())
 					ontologyClass.synonym = synonyms;
 				if (!StringUtils.isBlank(definition))
