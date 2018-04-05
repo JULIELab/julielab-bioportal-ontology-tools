@@ -356,6 +356,13 @@ public class OntologyClassNameExtractor {
 		OWLReasoner reasoner = reasonerFactory != null ? reasonerFactory.createReasoner(o) : null;
 
 		log.debug("Writing extracted class names for ontology {} to {}", acronym, classesFile);
+		writeNames(properties, classesFile, o, reasoner);
+
+		ontologyLoader.clearLoadedOntologies();
+	}
+
+	private void writeNames(AnnotationPropertySet properties, File classesFile, OWLOntology o, OWLReasoner reasoner)
+			throws IOException {
 		try (OutputStream os = FileUtilities.getOutputStreamToFile(classesFile)) {
 			Stream<OWLClass> classesInSignature = o.classesInSignature(Imports.INCLUDED);
 			for (Iterator<OWLClass> iterator = classesInSignature.iterator(); iterator.hasNext();) {
@@ -383,10 +390,7 @@ public class OntologyClassNameExtractor {
 
 				IOUtils.write(gson.toJson(ontologyClass) + "\n", os, "UTF-8");
 			}
-
 		}
-
-		ontologyLoader.clearLoadedOntologies();
 	}
 
 	/**
