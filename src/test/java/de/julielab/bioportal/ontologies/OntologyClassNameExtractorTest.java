@@ -106,4 +106,45 @@ public class OntologyClassNameExtractorTest {
 		}
 		assertEquals(8, lines);
 	}
+	
+	/**
+	 * The test ontology OBIBmini contains an <owl:deprecated> tag whose Literal resolves to Optional.empty.
+	 * If it isn't checked, this will crash the program, if used anyway.
+	 * @throws IOException
+	 * @throws OWLOntologyCreationException
+	 * @throws IllegalAccessException
+	 * @throws IllegalArgumentException
+	 * @throws InvocationTargetException
+	 * @throws NoSuchMethodException
+	 * @throws SecurityException
+	 */
+	@Test
+	public void checkOptionalLiteralEmpty() throws IOException, OWLOntologyCreationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
+		boolean applyReasoning = false;
+		boolean filterDeprecated = false;
+		OntologyClassNameExtractor nameExtractor = new OntologyClassNameExtractor(Executors.newCachedThreadPool(Executors.defaultThreadFactory()), applyReasoning, filterDeprecated);
+		String acronym = "OBIBmini";
+		File ontologyFile = new File("src/test/resources/OBIBmini.owl.gz");
+		
+		OWLReasoner reasoner = null;
+		
+		OntologyLoader ontologyLoader = new OntologyLoader();
+		AnnotationPropertySet properties = new AnnotationPropertySet(ontologyLoader.getOntologyManager(),
+				new File(""));
+		File classesFile = File.createTempFile(acronym, BioPortalToolConstants.SUBMISSION_EXT + ".gz");
+
+		OWLOntology o;
+		try {
+			o = ontologyLoader.loadOntology(ontologyFile);
+		} catch (OWLOntologyCreationException e) {
+			throw e;
+		}
+
+		//Make private method accessible
+		Class<? extends OntologyClassNameExtractor> targetClass = nameExtractor.getClass();
+		Method method = targetClass.getDeclaredMethod("writeNames",
+			properties.getClass(), classesFile.getClass(), OWLOntology.class, OWLReasoner.class);
+		method.setAccessible(true);
+		method.invoke(nameExtractor, properties, classesFile, o, reasoner);
+	}
 }
