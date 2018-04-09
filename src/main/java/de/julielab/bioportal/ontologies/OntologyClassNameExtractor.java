@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -535,7 +536,11 @@ public class OntologyClassNameExtractor {
 			Stream<OWLAnnotation> obsoleteAnnotations = EntitySearcher.getAnnotations(c, o, obsoleteProp);
 			for (Iterator<OWLAnnotation> iterator = obsoleteAnnotations.iterator(); iterator.hasNext();) {
 				OWLAnnotation owlAnnotation = iterator.next();
-				String literal = ((OWLLiteral) owlAnnotation.getValue()).getLiteral().toLowerCase();
+				Optional<OWLLiteral> optLiteral = owlAnnotation.getValue().asLiteral();
+				if (!optLiteral.isPresent()) {
+					continue;
+				}
+				String literal = optLiteral.get().getLiteral().toLowerCase();
 				if (!literal.equals("true") && !literal.equals("false"))
 					log.warn("The obsolete property value of class {} of ontology {} is neither true nor false",
 							c.getIRI(), o.getOntologyID());
