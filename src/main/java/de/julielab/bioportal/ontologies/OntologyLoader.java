@@ -5,6 +5,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.util.Arrays;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -21,6 +22,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.io.Files;
 
+import de.julielab.bioportal.util.BioPortalToolUtils;
 import de.julielab.java.utilities.FileUtilities;
 
 public class OntologyLoader {
@@ -57,12 +59,30 @@ public class OntologyLoader {
 		String lcdfn = Files.toString(downloadFileNameFile, Charset.forName("UTF-8")).toLowerCase();
 		final String noextension = lcdfn.substring(0, lcdfn.indexOf('.'));
 		File[] files = directory.listFiles(f -> f.getName().toLowerCase().startsWith(noextension));
-		if (files.length == 1)
-			return files[0];
-		else
+
+		if (files.length == 1) {
+			if (files[0].isDirectory()) {
+				files = files[0].listFiles(f -> f.getName().toLowerCase().startsWith(noextension));
+				files = Arrays.stream(files)
+						.filter(BioPortalToolUtils::isSupportedOntologyFile)
+						.toArray(File[]::new);
+				if (files.length == 1) {
+					return files[0];
+				} else {
+					throw new FileNotFoundException("The main file to load from directory " + 
+						directory.getAbsolutePath() + " could not be identified. There were " + files.length + 
+						" candidates: " + Stream.of(files)
+											.map(f -> f.getAbsolutePath())
+											.collect(Collectors.joining(", ")));
+				}
+			} else {
+				return files[0];
+			}
+		} else {
 			throw new FileNotFoundException("The main file to load from directory " + directory.getAbsolutePath()
 					+ " could not be identified. There were " + files.length + " candidates: "
 					+ Stream.of(files).map(f -> f.getAbsolutePath()).collect(Collectors.joining(", ")));
+		}
 	}
 
 	public OWLOntology loadOntology(File file) throws OWLOntologyCreationException {
@@ -76,8 +96,9 @@ public class OntologyLoader {
 			AutoIRIMapper autoIRIMapper = new AutoIRIMapper(file, true);
 			ontologyManager.getIRIMappers().add(autoIRIMapper);
 
+			OWLOntology o;
 			try {
-				loadOntology(getMainOntologyFile(file));
+				o = loadOntology(getMainOntologyFile(file));
 			} catch (IOException e) {
 				throw new OWLOntologyCreationException(e);
 			} finally {
@@ -85,6 +106,7 @@ public class OntologyLoader {
 				// ontologymanager
 				ontologyManager.getIRIMappers().remove(autoIRIMapper);
 			}
+			return o;
 		}
 		OWLOntology o;
 		try {
