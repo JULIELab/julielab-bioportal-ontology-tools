@@ -24,7 +24,7 @@ public class MappingDownloadApplication {
 		String apikey;
 		// TODO this is currently an interactive-only feature. Should also be
 		// possible to specify non-interactively
-		String ontosDirPath = null;
+		String ontosDirPath = "";
 		Set<String> ontologiesForDownload = Collections.emptySet();
 		if (args.length < 2) {
 			System.out.println("Usage: " + MappingDownloader.class.getSimpleName()
