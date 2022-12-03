@@ -29,7 +29,7 @@ public class HttpHandler {
 	 * but instead return an error due to the missing key. A key may be obtained
 	 * for free by registering with BioPortal.
 	 * 
-	 * @see http://bioportal.bioontology.org/
+	 * @see <url>http://bioportal.bioontology.org/</url>
 	 */
 	private String apiKey;
 	private HttpClient client;
